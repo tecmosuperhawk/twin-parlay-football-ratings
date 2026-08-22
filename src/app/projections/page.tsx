@@ -1,3 +1,7 @@
+"use client";
+
+import { useState, useMemo } from "react";
+
 const games = [
   // Week 0
   {
@@ -112,7 +116,7 @@ const games = [
     total_edge: 1.9,
     total_lean: "OVER",
   },
-  // Week 1 highlights
+  // Week 1
   {
     week: "Week 1",
     away: "North Texas",
@@ -213,17 +217,19 @@ const games = [
   },
 ];
 
+type SortKey = "default" | "spread_edge" | "total_edge";
+
 function EdgeBadge({ lean, edge }: { lean: string; edge: number }) {
   if (lean === "PASS") {
     return <span className="text-zinc-500 text-xs">PASS</span>;
   }
-  const isPositive = edge > 0;
+  const isStrong = Math.abs(edge) >= 3;
   return (
     <span
       className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-        isPositive
-          ? "bg-emerald-900/60 text-emerald-300"
-          : "bg-rose-900/60 text-rose-300"
+        isStrong
+          ? "bg-emerald-900/70 text-emerald-300"
+          : "bg-zinc-800 text-zinc-300"
       }`}
     >
       {lean} ({edge > 0 ? "+" : ""}
@@ -233,6 +239,19 @@ function EdgeBadge({ lean, edge }: { lean: string; edge: number }) {
 }
 
 export default function ProjectionsPage() {
+  const [sortKey, setSortKey] = useState<SortKey>("spread_edge");
+
+  const sortedGames = useMemo(() => {
+    const copy = [...games];
+    if (sortKey === "spread_edge") {
+      copy.sort((a, b) => Math.abs(b.spread_edge) - Math.abs(a.spread_edge));
+    } else if (sortKey === "total_edge") {
+      copy.sort((a, b) => Math.abs(b.total_edge) - Math.abs(a.total_edge));
+    }
+    // "default" keeps original order
+    return copy;
+  }, [sortKey]);
+
   return (
     <main className="min-h-screen bg-zinc-950 text-white">
       <div className="max-w-6xl mx-auto px-4 py-10">
@@ -246,10 +265,44 @@ export default function ProjectionsPage() {
           </p>
         </div>
 
+        {/* Sort controls */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          <button
+            onClick={() => setSortKey("spread_edge")}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+              sortKey === "spread_edge"
+                ? "bg-emerald-600 text-white"
+                : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+            }`}
+          >
+            Biggest ATS Edge
+          </button>
+          <button
+            onClick={() => setSortKey("total_edge")}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+              sortKey === "total_edge"
+                ? "bg-emerald-600 text-white"
+                : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+            }`}
+          >
+            Biggest Total Edge
+          </button>
+          <button
+            onClick={() => setSortKey("default")}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+              sortKey === "default"
+                ? "bg-emerald-600 text-white"
+                : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+            }`}
+          >
+            Original Order
+          </button>
+        </div>
+
         <div className="space-y-4">
-          {games.map((g, i) => (
+          {sortedGames.map((g, i) => (
             <div
-              key={i}
+              key={`${g.away}-${g.home}-${i}`}
               className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5"
             >
               <div className="flex items-center justify-between mb-3">
@@ -259,19 +312,17 @@ export default function ProjectionsPage() {
                 </span>
               </div>
 
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <div className="text-lg font-semibold">
-                    {g.away} @ {g.home}
-                  </div>
+              <div className="mb-4">
+                <div className="text-lg font-semibold">
+                  {g.away} @ {g.home}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
                 {/* Spread */}
                 <div>
                   <div className="text-zinc-500 mb-1">Spread</div>
-                  <div className="flex items-baseline gap-3">
+                  <div className="flex flex-wrap items-baseline gap-3">
                     <span className="font-medium">
                       Model: {g.home} {g.model_spread > 0 ? "+" : ""}
                       {g.model_spread}
@@ -289,7 +340,7 @@ export default function ProjectionsPage() {
                 {/* Total */}
                 <div>
                   <div className="text-zinc-500 mb-1">Total</div>
-                  <div className="flex items-baseline gap-3">
+                  <div className="flex flex-wrap items-baseline gap-3">
                     <span className="font-medium">Model: {g.model_total}</span>
                     <span className="text-zinc-500">
                       Mkt: {g.market_total}
