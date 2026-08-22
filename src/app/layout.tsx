@@ -29,33 +29,27 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-zinc-950 text-white`}
       >
-        <header className="border-b border-zinc-800 bg-zinc-950">
+        <header className="border-b border-zinc-800 bg-zinc-900">
           <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2.5 hover:opacity-90 transition">
+            <Link href="/" className="flex items-center gap-2.5">
               <Image
                 src="/tp-logo.jpg"
                 alt="Twin Parlay"
-                width={32}
-                height={32}
+                width={34}
+                height={34}
                 className="rounded-md"
                 priority
               />
-              <span className="font-semibold tracking-tight text-[15px]">
+              <span className="font-semibold tracking-tight text-white text-[15px]">
                 Twin Parlay Ratings
               </span>
             </Link>
 
-            <nav className="ml-auto flex items-center gap-5 text-sm">
-              <Link
-                href="/ratings"
-                className="text-zinc-400 hover:text-white transition"
-              >
+            <nav className="ml-auto flex items-center gap-6 text-sm font-medium">
+              <Link href="/ratings" className="text-zinc-300 hover:text-white">
                 Ratings
               </Link>
-              <Link
-                href="/projections"
-                className="text-zinc-400 hover:text-white transition"
-              >
+              <Link href="/projections" className="text-zinc-300 hover:text-white">
                 Projections
               </Link>
             </nav>
