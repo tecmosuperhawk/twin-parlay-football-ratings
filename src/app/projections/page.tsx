@@ -4,7 +4,7 @@ export default function ProjectionsPage() {
       <div className="max-w-6xl mx-auto px-4 py-10">
         <div className="mb-8">
           <a href="/" className="text-zinc-400 hover:text-white text-sm">
-            ← Back to Dashboard
+            &larr; Back to Dashboard
           </a>
           <h1 className="text-3xl font-bold mt-4">Weekly Projections</h1>
           <p className="text-zinc-400 mt-2">
