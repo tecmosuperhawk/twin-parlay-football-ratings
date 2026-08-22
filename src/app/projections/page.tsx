@@ -285,7 +285,7 @@ export default function ProjectionsPage() {
                 : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
             }`}
           >
-            Biggest Total Edge
+            Biggest Totals Edge
           </button>
           <button
             onClick={() => setSortKey("default")}

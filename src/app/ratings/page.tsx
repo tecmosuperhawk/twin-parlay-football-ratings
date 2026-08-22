@@ -1,3 +1,7 @@
+"use client";
+
+import { useState, useMemo } from "react";
+
 const ratings = [
   { rank: 1, team: "Ohio State", blended_z: 2.26, makinen: 71.0, steele: 66.3, sp_plus: 32.7, massey: 80.5, hfa: 3.5 },
   { rank: 2, team: "Oregon", blended_z: 2.04, makinen: 68.5, steele: 65.9, sp_plus: 29.2, massey: 76.1, hfa: 3.5 },
@@ -26,7 +30,52 @@ const ratings = [
   { rank: 25, team: "Clemson", blended_z: 0.96, makinen: 54.0, steele: 55.7, sp_plus: 13.1, massey: 63.7, hfa: 2.0 },
 ];
 
+type SortKey = "rank" | "blended_z" | "makinen" | "steele" | "sp_plus" | "massey" | "hfa";
+
 export default function RatingsPage() {
+  const [sortKey, setSortKey] = useState<SortKey>("rank");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const sorted = useMemo(() => {
+    const copy = [...ratings];
+    copy.sort((a, b) => {
+      const aVal = a[sortKey] ?? -999;
+      const bVal = b[sortKey] ?? -999;
+      if (sortDir === "asc") return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+      return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+    });
+    return copy;
+  }, [sortKey, sortDir]);
+
+  function handleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      // Rank ascending by default, everything else descending (higher = better)
+      setSortDir(key === "rank" ? "asc" : "desc");
+    }
+  }
+
+  function SortHeader({ label, field }: { label: string; field: SortKey }) {
+    const active = sortKey === field;
+    return (
+      <th
+        className="text-right px-4 py-3 font-medium cursor-pointer select-none hover:text-white"
+        onClick={() => handleSort(field)}
+      >
+        <span className="inline-flex items-center gap-1">
+          {label}
+          {active && (
+            <span className="text-emerald-400 text-xs">
+              {sortDir === "asc" ? "▲" : "▼"}
+            </span>
+          )}
+        </span>
+      </th>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-zinc-950 text-white">
       <div className="max-w-6xl mx-auto px-4 py-10">
@@ -45,23 +94,36 @@ export default function RatingsPage() {
             <table className="w-full text-sm">
               <thead className="bg-zinc-900 text-zinc-400">
                 <tr>
-                  <th className="text-left px-4 py-3 font-medium">#</th>
+                  <th
+                    className="text-left px-4 py-3 font-medium cursor-pointer select-none hover:text-white"
+                    onClick={() => handleSort("rank")}
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      #
+                      {sortKey === "rank" && (
+                        <span className="text-emerald-400 text-xs">
+                          {sortDir === "asc" ? "▲" : "▼"}
+                        </span>
+                      )}
+                    </span>
+                  </th>
                   <th className="text-left px-4 py-3 font-medium">Team</th>
-                  <th className="text-right px-4 py-3 font-medium">Blended</th>
-                  <th className="text-right px-4 py-3 font-medium">Makinen</th>
-                  <th className="text-right px-4 py-3 font-medium">Steele</th>
-                  <th className="text-right px-4 py-3 font-medium">SP+</th>
-                  <th className="text-right px-4 py-3 font-medium">Massey</th>
-                  <th className="text-right px-4 py-3 font-medium">HFA</th>
+                  <SortHeader label="Blended" field="blended_z" />
+                  <SortHeader label="Makinen" field="makinen" />
+                  <SortHeader label="Steele" field="steele" />
+                  <SortHeader label="SP+" field="sp_plus" />
+                  <SortHeader label="Massey" field="massey" />
+                  <SortHeader label="HFA" field="hfa" />
                 </tr>
               </thead>
               <tbody>
-                {ratings.map((r) => (
+                {sorted.map((r) => (
                   <tr key={r.rank} className="border-t border-zinc-800 hover:bg-zinc-900/60">
                     <td className="px-4 py-2.5 text-zinc-500">{r.rank}</td>
                     <td className="px-4 py-2.5 font-medium">{r.team}</td>
                     <td className="px-4 py-2.5 text-right font-semibold text-emerald-400">
-                      {r.blended_z > 0 ? "+" : ""}{r.blended_z}
+                      {r.blended_z > 0 ? "+" : ""}
+                      {r.blended_z}
                     </td>
                     <td className="px-4 py-2.5 text-right text-zinc-300">{r.makinen}</td>
                     <td className="px-4 py-2.5 text-right text-zinc-300">{r.steele ?? "—"}</td>
@@ -76,7 +138,7 @@ export default function RatingsPage() {
         </div>
 
         <p className="text-zinc-500 text-xs mt-4">
-          Blended column is a normalized z-score average of the four sources. Higher is better.
+          Click any column header to sort. Click again to reverse direction.
         </p>
       </div>
     </main>
