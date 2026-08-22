@@ -34,7 +34,7 @@ export default function RootLayout({
           <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-3">
             <Link href="/" className="flex items-center gap-2.5 hover:opacity-90 transition">
               <Image
-                src="/tp-logo.png"
+                src="/tp-logo.jpg"
                 alt="Twin Parlay"
                 width={36}
                 height={36}
