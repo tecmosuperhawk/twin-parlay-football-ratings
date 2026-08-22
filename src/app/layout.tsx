@@ -29,31 +29,38 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-zinc-950 text-white`}
       >
-        {/* Simple top bar */}
-        <div className="max-w-6xl mx-auto px-4 pt-5 pb-2 flex items-center gap-3">
-          <Link href="/" className="flex items-center gap-2.5">
-            <Image
-              src="/tp-logo.jpg"
-              alt="Twin Parlay"
-              width={40}
-              height={40}
-              className="rounded-md"
-              priority
-            />
-            <span className="font-semibold tracking-tight text-lg">
-              Twin Parlay Ratings
-            </span>
-          </Link>
+        <header className="border-b border-zinc-800 bg-zinc-950">
+          <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-2.5 hover:opacity-90 transition">
+              <Image
+                src="/tp-logo.jpg"
+                alt="Twin Parlay"
+                width={32}
+                height={32}
+                className="rounded-md"
+                priority
+              />
+              <span className="font-semibold tracking-tight text-[15px]">
+                Twin Parlay Ratings
+              </span>
+            </Link>
 
-          <nav className="ml-auto flex items-center gap-5 text-sm">
-            <Link href="/ratings" className="text-zinc-400 hover:text-white transition">
-              Ratings
-            </Link>
-            <Link href="/projections" className="text-zinc-400 hover:text-white transition">
-              Projections
-            </Link>
-          </nav>
-        </div>
+            <nav className="ml-auto flex items-center gap-5 text-sm">
+              <Link
+                href="/ratings"
+                className="text-zinc-400 hover:text-white transition"
+              >
+                Ratings
+              </Link>
+              <Link
+                href="/projections"
+                className="text-zinc-400 hover:text-white transition"
+              >
+                Projections
+              </Link>
+            </nav>
+          </div>
+        </header>
 
         {children}
       </body>
