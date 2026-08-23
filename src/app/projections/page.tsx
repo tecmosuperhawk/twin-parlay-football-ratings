@@ -36,11 +36,21 @@ const CONFERENCES = [
   "Independent",
 ];
 
-function EdgeBadge({ value, lean }: { value: number | null; lean: string | null }) {
+function EdgeBadge({
+  value,
+  lean,
+}: {
+  value: number | null;
+  lean: string | null;
+}) {
   if (value === null) return <span className="text-zinc-500">—</span>;
   const abs = Math.abs(value);
   const color =
-    abs >= 5 ? "text-emerald-400" : abs >= 3 ? "text-yellow-400" : "text-zinc-300";
+    abs >= 5
+      ? "text-emerald-400"
+      : abs >= 3
+        ? "text-yellow-400"
+        : "text-zinc-300";
   return (
     <span className={color}>
       {value > 0 ? "+" : ""}
@@ -61,12 +71,14 @@ export default function ProjectionsPage() {
       const supabase = createClient();
       const { data } = await supabase
         .from("games")
-        .select(`
+        .select(
+          `
           id, week, neutral, market_spread, market_total,
           away:away_team_id(name, conference),
           home:home_team_id(name, conference),
           projections(model_spread, spread_edge, spread_lean, model_total, total_edge, total_lean)
-        `)
+        `
+        )
         .order("week");
 
       if (!data) {
@@ -75,7 +87,9 @@ export default function ProjectionsPage() {
       }
 
       const rows: GameRow[] = data.map((g: any) => {
-        const proj = Array.isArray(g.projections) ? g.projections[0] : g.projections;
+        const proj = Array.isArray(g.projections)
+          ? g.projections[0]
+          : g.projections;
         return {
           id: g.id,
           week: g.week,
@@ -181,68 +195,72 @@ export default function ProjectionsPage() {
         {loading ? (
           <p className="text-zinc-400">Loading…</p>
         ) : (
-          <div className="rounded-xl border border-zinc-800 overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-zinc-900 text-zinc-400">
-                <tr>
-                  <th className="text-left px-3 py-3">Matchup</th>
-                  <th className="text-left px-3 py-3">Week</th>
-                  <th className="text-right px-3 py-3">Mkt Spread</th>
-                  <th className="text-right px-3 py-3">Model</th>
-                  <th className="text-right px-3 py-3">ATS Edge</th>
-                  <th className="text-right px-3 py-3">Mkt Total</th>
-                  <th className="text-right px-3 py-3">Model Tot</th>
-                  <th className="text-right px-3 py-3">Tot Edge</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((g) => (
-                  <tr
-                    key={g.id}
-                    className="border-t border-zinc-800 hover:bg-zinc-900/50"
-                  >
-                    <td className="px-3 py-2.5">
-                      <span className="font-medium">{g.away}</span>
-                      <span className="text-zinc-500 text-xs ml-1">
-                        ({g.away_conf ?? "?"})
-                      </span>
-                      <span className="text-zinc-500 mx-1">
-                        {g.neutral ? "vs" : "@"}
-                      </span>
-                      <span className="font-medium">{g.home}</span>
-                      <span className="text-zinc-500 text-xs ml-1">
-                        ({g.home_conf ?? "?"})
-                      </span>
-                    </td>
-                    <td className="px-3 py-2.5 text-zinc-400">{g.week}</td>
-                    <td className="px-3 py-2.5 text-right">
-                      {g.market_spread != null
-                        ? (g.market_spread > 0 ? "+" : "") + g.market_spread
-                        : "—"}
-                    </td>
-                    <td className="px-3 py-2.5 text-right">
-                      {g.model_spread != null
-                        ? (g.model_spread > 0 ? "+" : "") +
-                          g.model_spread.toFixed(1)
-                        : "—"}
-                    </td>
-                    <td className="px-3 py-2.5 text-right">
-                      <EdgeBadge value={g.spread_edge} lean={g.spread_lean} />
-                    </td>
-                    <td className="px-3 py-2.5 text-right">
-                      {g.market_total ?? "—"}
-                    </td>
-                    <td className="px-3 py-2.5 text-right">
-                      {g.model_total?.toFixed(1) ?? "—"}
-                    </td>
-                    <td className="px-3 py-2.5 text-right">
-                      <EdgeBadge value={g.total_edge} lean={g.total_lean} />
-                    </td>
+          <>
+            <div className="rounded-xl border border-zinc-800 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-zinc-900 text-zinc-400">
+                  <tr>
+                    <th className="text-left px-3 py-3">Matchup</th>
+                    <th className="text-left px-3 py-3">Week</th>
+                    <th className="text-right px-3 py-3">Mkt Spread</th>
+                    <th className="text-right px-3 py-3">Model</th>
+                    <th className="text-right px-3 py-3">ATS Edge</th>
+                    <th className="text-right px-3 py-3">Mkt Total</th>
+                    <th className="text-right px-3 py-3">Model Tot</th>
+                    <th className="text-right px-3 py-3">Tot Edge</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filtered.map((g) => (
+                    <tr
+                      key={g.id}
+                      className="border-t border-zinc-800 hover:bg-zinc-900/50"
+                    >
+                      <td className="px-3 py-2.5">
+                        <span className="font-medium">{g.away}</span>
+                        <span className="text-zinc-500 text-xs ml-1">
+                          ({g.away_conf ?? "?"})
+                        </span>
+                        <span className="text-zinc-500 mx-1">
+                          {g.neutral ? "vs" : "@"}
+                        </span>
+                        <span className="font-medium">{g.home}</span>
+                        <span className="text-zinc-500 text-xs ml-1">
+                          ({g.home_conf ?? "?"})
+                        </span>
+                      </td>
+                      <td className="px-3 py-2.5 text-zinc-400">{g.week}</td>
+                      <td className="px-3 py-2.5 text-right">
+                        {g.market_spread != null
+                          ? (g.market_spread > 0 ? "+" : "") + g.market_spread
+                          : "—"}
+                      </td>
+                      <td className="px-3 py-2.5 text-right">
+                        {g.model_spread != null
+                          ? (g.model_spread > 0 ? "+" : "") +
+                            g.model_spread.toFixed(1)
+                          : "—"}
+                      </td>
+                      <td className="px-3 py-2.5 text-right">
+                        <EdgeBadge
+                          value={g.spread_edge}
+                          lean={g.spread_lean}
+                        />
+                      </td>
+                      <td className="px-3 py-2.5 text-right">
+                        {g.market_total ?? "—"}
+                      </td>
+                      <td className="px-3 py-2.5 text-right">
+                        {g.model_total?.toFixed(1) ?? "—"}
+                      </td>
+                      <td className="px-3 py-2.5 text-right">
+                        <EdgeBadge value={g.total_edge} lean={g.total_lean} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <p className="text-sm text-zinc-500 mt-4 text-right">
               Showing {filtered.length} of {games.length} games
             </p>
