@@ -52,6 +52,15 @@ export default function Home() {
               Clay 2026 def rank and points allowed per game.
             </p>
           </a>
+          <a
+            href="/nfl/props"
+            className="block rounded-xl border border-zinc-800 bg-zinc-900 p-6 hover:border-zinc-600 transition"
+          >
+            <h2 className="text-xl font-semibold mb-2">NFL Player Props</h2>
+            <p className="text-zinc-400 text-sm">
+              Week 1 pass / rush / receiving projections with opponent defensive ranks.
+            </p>
+          </a>
         </div>
 
         <div className="mt-10 rounded-xl border border-zinc-800 bg-zinc-900 p-6">
