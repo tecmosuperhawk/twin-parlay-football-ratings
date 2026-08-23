@@ -43,6 +43,15 @@ export default function Home() {
               Clay 2026 team projections — total, pass, rush, PPG.
             </p>
           </a>
+          <a
+            href="/nfl/defense"
+            className="block rounded-xl border border-zinc-800 bg-zinc-900 p-6 hover:border-zinc-600 transition"
+          >
+            <h2 className="text-xl font-semibold mb-2">NFL Defense Rankings</h2>
+            <p className="text-zinc-400 text-sm">
+              Clay 2026 def rank and points allowed per game.
+            </p>
+          </a>
         </div>
 
         <div className="mt-10 rounded-xl border border-zinc-800 bg-zinc-900 p-6">
