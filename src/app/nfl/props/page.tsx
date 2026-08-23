@@ -24,6 +24,27 @@ export default function NflPropsPage() {
     if (pos !== "ALL") list = list.filter((r) => r.pos === pos);
 
     list.sort((a, b) => {
+      // When sorting a yards or matchup column, push players with no
+      // relevant projection to the bottom (e.g. RBs when sorting Pass).
+      const aRelevant =
+        sortKey === "pass_yds" || sortKey === "opp_pass_rk"
+          ? a.pass_yds > 0
+          : sortKey === "rush_yds" || sortKey === "opp_rush_rk"
+            ? a.rush_yds > 0
+            : sortKey === "rec_yds" || sortKey === "opp_rec_rk"
+              ? a.rec_yds > 0
+              : true;
+      const bRelevant =
+        sortKey === "pass_yds" || sortKey === "opp_pass_rk"
+          ? b.pass_yds > 0
+          : sortKey === "rush_yds" || sortKey === "opp_rush_rk"
+            ? b.rush_yds > 0
+            : sortKey === "rec_yds" || sortKey === "opp_rec_rk"
+              ? b.rec_yds > 0
+              : true;
+
+      if (aRelevant !== bRelevant) return aRelevant ? -1 : 1;
+
       const av = a[sortKey];
       const bv = b[sortKey];
       if (typeof av === "string" && typeof bv === "string") {
