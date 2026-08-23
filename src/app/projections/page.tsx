@@ -243,6 +243,10 @@ export default function ProjectionsPage() {
               </tbody>
             </table>
           </div>
+            <p className="text-sm text-zinc-500 mt-4 text-right">
+              Showing {filtered.length} of {games.length} games
+            </p>
+          </>
         )}
       </div>
     </main>
