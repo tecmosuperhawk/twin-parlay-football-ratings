@@ -36,10 +36,9 @@ const CONFERENCES = [
   "Independent",
 ];
 
-/** Realistic CFB score values (3s and 7s combinations). */
+/** Realistic CFB finals — prefer common “football” numbers. */
 const COMMON_SCORES = [
-  0, 3, 6, 7, 9, 10, 13, 14, 16, 17, 19, 20, 21, 23, 24, 26, 27, 28, 30, 31,
-  33, 34, 35, 37, 38, 40, 41, 42, 44, 45, 48, 49, 52, 55, 56,
+  7, 10, 13, 14, 17, 20, 21, 24, 27, 28, 31, 34, 35, 38, 41, 42, 45, 48, 49, 52, 56,
 ];
 
 function nearestCommon(x: number): number {
@@ -56,64 +55,119 @@ function nearestCommon(x: number): number {
 }
 
 /**
- * homeSpread: home line (negative = home favored), e.g. -3.7
- * total: model total
+ * homeSpread: model home line (neg = home favored)
+ * marketSpread: market home line
+ * modelTotal / marketTotal: optional; used to push scoring up/down
  */
 function practicalPrediction(
   homeTeam: string,
   awayTeam: string,
   homeSpread: number,
-  total: number
+  modelTotal: number,
+  marketSpread: number | null,
+  marketTotal: number | null
 ): string {
-  let homeRaw = (total - homeSpread) / 2;
-  let awayRaw = (total + homeSpread) / 2;
+  const mkt = marketSpread ?? homeSpread;
+  const mktTot = marketTotal ?? modelTotal;
 
-  // Light conviction lean on close games only
-  if (Math.abs(homeSpread) < 4) {
-    if (homeSpread < 0) {
-      homeRaw += 0.6;
-      awayRaw -= 0.3;
-    } else if (homeSpread > 0) {
-      awayRaw += 0.6;
-      homeRaw -= 0.3;
+  // Model vs market disagreement (positive = model likes home more than market)
+  const spreadDisagreement = mkt - homeSpread;
+  // e.g. market -5.5, model -1.8 → disagreement = -3.7 → model likes away (Hawaii)
+
+  // Start from model split
+  let homeRaw = (modelTotal - homeSpread) / 2;
+  let awayRaw = (modelTotal + homeSpread) / 2;
+
+  // --- Narrative leans ---
+
+  // 1) If model total is clearly above market, push scoring up
+  const totalBump = Math.max(0, modelTotal - mktTot);
+  if (totalBump >= 2) {
+    const extra = Math.min(7, totalBump * 1.2);
+    homeRaw += extra * 0.45;
+    awayRaw += extra * 0.55;
+  }
+
+  // 2) Significant model-vs-market ATS edge → lean into the model side harder
+  //    and occasionally call an outright upset on medium dogs
+  if (Math.abs(spreadDisagreement) >= 2.5) {
+    // Model likes home more than market
+    if (spreadDisagreement > 0) {
+      homeRaw += 2.5;
+      awayRaw -= 1.0;
+    } else {
+      // Model likes away more than market (e.g. Hawaii)
+      awayRaw += 2.5;
+      homeRaw -= 1.0;
     }
   }
 
-  // Never flip a 10+ point dog to an outright win
-  const margin = homeRaw - awayRaw;
-  if (homeSpread <= -10 && margin < 0) {
-    const mid = (homeRaw + awayRaw) / 2;
-    homeRaw = mid + Math.abs(homeSpread) / 2;
-    awayRaw = mid - Math.abs(homeSpread) / 2;
-  }
-  if (homeSpread >= 10 && margin > 0) {
-    const mid = (homeRaw + awayRaw) / 2;
-    awayRaw = mid + Math.abs(homeSpread) / 2;
-    homeRaw = mid - Math.abs(homeSpread) / 2;
+  // 3) Close model games (|spread| < 3): take a shot — flip ~35% of the time
+  //    toward the side the model likes vs market, else a mild favorite lean
+  if (Math.abs(homeSpread) < 3) {
+    const takeShot = Math.abs(spreadDisagreement) >= 2 || Math.abs(homeSpread) < 1.5;
+    if (takeShot) {
+      // Prefer the side model likes relative to market
+      if (spreadDisagreement < -1) {
+        // model on away
+        awayRaw += 3.5;
+        homeRaw -= 1.5;
+      } else if (spreadDisagreement > 1) {
+        homeRaw += 3.5;
+        awayRaw -= 1.5;
+      } else if (homeSpread < 0) {
+        homeRaw += 2;
+      } else {
+        awayRaw += 2;
+      }
+    }
   }
 
+  // 4) Never crown a 14+ point dog as winner
+  let margin = homeRaw - awayRaw;
+  if (homeSpread <= -14 && margin < 0) {
+    const mid = (homeRaw + awayRaw) / 2;
+    homeRaw = mid + 10;
+    awayRaw = mid - 7;
+  }
+  if (homeSpread >= 14 && margin > 0) {
+    const mid = (homeRaw + awayRaw) / 2;
+    awayRaw = mid + 10;
+    homeRaw = mid - 7;
+  }
+
+  // Snap to common scores
   let homePts = nearestCommon(homeRaw);
   let awayPts = nearestCommon(awayRaw);
 
+  // Avoid ties
   if (homePts === awayPts) {
-    if (homeSpread <= 0) homePts = nearestCommon(homePts + 3);
-    else awayPts = nearestCommon(awayPts + 3);
-    if (homePts === awayPts) {
-      if (homeSpread <= 0) homePts += 1;
-      else awayPts += 1;
+    if (homeRaw >= awayRaw) homePts = nearestCommon(homePts + 7);
+    else awayPts = nearestCommon(awayPts + 7);
+  }
+
+  // Avoid 1–3 point “ugly” finals most of the time → stretch to a field goal+ margin
+  margin = homePts - awayPts;
+  if (Math.abs(margin) > 0 && Math.abs(margin) <= 3) {
+    if (homePts > awayPts) {
+      homePts = nearestCommon(homePts + 4);
+      if (homePts <= awayPts) homePts = awayPts + 7;
+    } else {
+      awayPts = nearestCommon(awayPts + 4);
+      if (awayPts <= homePts) awayPts = homePts + 7;
     }
   }
 
-  // Soften awkward 1-point finals
-  if (Math.abs(homePts - awayPts) === 1) {
-    if (homePts > awayPts) homePts = nearestCommon(homePts + 2);
-    else awayPts = nearestCommon(awayPts + 2);
+  // Blowouts: if model is double-digit, keep a decisive look
+  if (homeSpread <= -20 && homePts - awayPts < 17) {
+    homePts = nearestCommon(Math.max(homePts, awayPts + 21));
+  }
+  if (homeSpread >= 20 && awayPts - homePts < 17) {
+    awayPts = nearestCommon(Math.max(awayPts, homePts + 21));
   }
 
   const winner = homePts > awayPts ? homeTeam : awayTeam;
-  const high = Math.max(homePts, awayPts);
-  const low = Math.min(homePts, awayPts);
-  return `${winner} ${high}-${low}`;
+  return `${winner} ${Math.max(homePts, awayPts)}-${Math.min(homePts, awayPts)}`;
 }
 
 function EdgeBadge({
@@ -300,7 +354,9 @@ export default function ProjectionsPage() {
                             g.home,
                             g.away,
                             g.model_spread,
-                            g.model_total
+                            g.model_total,
+                            g.market_spread,
+                            g.market_total
                           )
                         : "—";
                     return (
