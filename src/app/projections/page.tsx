@@ -36,6 +36,86 @@ const CONFERENCES = [
   "Independent",
 ];
 
+/** Realistic CFB score values (3s and 7s combinations). */
+const COMMON_SCORES = [
+  0, 3, 6, 7, 9, 10, 13, 14, 16, 17, 19, 20, 21, 23, 24, 26, 27, 28, 30, 31,
+  33, 34, 35, 37, 38, 40, 41, 42, 44, 45, 48, 49, 52, 55, 56,
+];
+
+function nearestCommon(x: number): number {
+  let best = COMMON_SCORES[0];
+  let bestDist = Math.abs(x - best);
+  for (const s of COMMON_SCORES) {
+    const d = Math.abs(x - s);
+    if (d < bestDist) {
+      best = s;
+      bestDist = d;
+    }
+  }
+  return best;
+}
+
+/**
+ * homeSpread: home line (negative = home favored), e.g. -3.7
+ * total: model total
+ */
+function practicalPrediction(
+  homeTeam: string,
+  awayTeam: string,
+  homeSpread: number,
+  total: number
+): string {
+  let homeRaw = (total - homeSpread) / 2;
+  let awayRaw = (total + homeSpread) / 2;
+
+  // Light conviction lean on close games only
+  if (Math.abs(homeSpread) < 4) {
+    if (homeSpread < 0) {
+      homeRaw += 0.6;
+      awayRaw -= 0.3;
+    } else if (homeSpread > 0) {
+      awayRaw += 0.6;
+      homeRaw -= 0.3;
+    }
+  }
+
+  // Never flip a 10+ point dog to an outright win
+  const margin = homeRaw - awayRaw;
+  if (homeSpread <= -10 && margin < 0) {
+    const mid = (homeRaw + awayRaw) / 2;
+    homeRaw = mid + Math.abs(homeSpread) / 2;
+    awayRaw = mid - Math.abs(homeSpread) / 2;
+  }
+  if (homeSpread >= 10 && margin > 0) {
+    const mid = (homeRaw + awayRaw) / 2;
+    awayRaw = mid + Math.abs(homeSpread) / 2;
+    homeRaw = mid - Math.abs(homeSpread) / 2;
+  }
+
+  let homePts = nearestCommon(homeRaw);
+  let awayPts = nearestCommon(awayRaw);
+
+  if (homePts === awayPts) {
+    if (homeSpread <= 0) homePts = nearestCommon(homePts + 3);
+    else awayPts = nearestCommon(awayPts + 3);
+    if (homePts === awayPts) {
+      if (homeSpread <= 0) homePts += 1;
+      else awayPts += 1;
+    }
+  }
+
+  // Soften awkward 1-point finals
+  if (Math.abs(homePts - awayPts) === 1) {
+    if (homePts > awayPts) homePts = nearestCommon(homePts + 2);
+    else awayPts = nearestCommon(awayPts + 2);
+  }
+
+  const winner = homePts > awayPts ? homeTeam : awayTeam;
+  const high = Math.max(homePts, awayPts);
+  const low = Math.min(homePts, awayPts);
+  return `${winner} ${high}-${low}`;
+}
+
 function EdgeBadge({
   value,
   lean,
@@ -140,9 +220,10 @@ export default function ProjectionsPage() {
           <a href="/" className="text-zinc-400 hover:text-white text-sm">
             ← Back to Dashboard
           </a>
-          <h1 className="text-3xl font-bold mt-4">Weekly Projections</h1>
+          <h1 className="text-3xl font-bold mt-4">CFB Weekly Projections</h1>
           <p className="text-zinc-400 mt-2">
-            Model spreads, totals, and edges vs current market lines
+            Model spreads & totals stay exact. Practical Prediction is a
+            realistic score call.
           </p>
         </div>
 
@@ -202,6 +283,7 @@ export default function ProjectionsPage() {
                   <tr>
                     <th className="text-left px-3 py-3">Matchup</th>
                     <th className="text-left px-3 py-3">Week</th>
+                    <th className="text-left px-3 py-3">Practical Prediction</th>
                     <th className="text-right px-3 py-3">Mkt Spread</th>
                     <th className="text-right px-3 py-3">Model</th>
                     <th className="text-right px-3 py-3">ATS Edge</th>
@@ -211,53 +293,71 @@ export default function ProjectionsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((g) => (
-                    <tr
-                      key={g.id}
-                      className="border-t border-zinc-800 hover:bg-zinc-900/50"
-                    >
-                      <td className="px-3 py-2.5">
-                        <span className="font-medium">{g.away}</span>
-                        <span className="text-zinc-500 text-xs ml-1">
-                          ({g.away_conf ?? "?"})
-                        </span>
-                        <span className="text-zinc-500 mx-1">
-                          {g.neutral ? "vs" : "@"}
-                        </span>
-                        <span className="font-medium">{g.home}</span>
-                        <span className="text-zinc-500 text-xs ml-1">
-                          ({g.home_conf ?? "?"})
-                        </span>
-                      </td>
-                      <td className="px-3 py-2.5 text-zinc-400">{g.week}</td>
-                      <td className="px-3 py-2.5 text-right">
-                        {g.market_spread != null
-                          ? (g.market_spread > 0 ? "+" : "") + g.market_spread
-                          : "—"}
-                      </td>
-                      <td className="px-3 py-2.5 text-right">
-                        {g.model_spread != null
-                          ? (g.model_spread > 0 ? "+" : "") +
-                            g.model_spread.toFixed(1)
-                          : "—"}
-                      </td>
-                      <td className="px-3 py-2.5 text-right">
-                        <EdgeBadge
-                          value={g.spread_edge}
-                          lean={g.spread_lean}
-                        />
-                      </td>
-                      <td className="px-3 py-2.5 text-right">
-                        {g.market_total ?? "—"}
-                      </td>
-                      <td className="px-3 py-2.5 text-right">
-                        {g.model_total?.toFixed(1) ?? "—"}
-                      </td>
-                      <td className="px-3 py-2.5 text-right">
-                        <EdgeBadge value={g.total_edge} lean={g.total_lean} />
-                      </td>
-                    </tr>
-                  ))}
+                  {filtered.map((g) => {
+                    const pred =
+                      g.model_spread != null && g.model_total != null
+                        ? practicalPrediction(
+                            g.home,
+                            g.away,
+                            g.model_spread,
+                            g.model_total
+                          )
+                        : "—";
+                    return (
+                      <tr
+                        key={g.id}
+                        className="border-t border-zinc-800 hover:bg-zinc-900/50"
+                      >
+                        <td className="px-3 py-2.5">
+                          <span className="font-medium">{g.away}</span>
+                          <span className="text-zinc-500 text-xs ml-1">
+                            ({g.away_conf ?? "?"})
+                          </span>
+                          <span className="text-zinc-500 mx-1">
+                            {g.neutral ? "vs" : "@"}
+                          </span>
+                          <span className="font-medium">{g.home}</span>
+                          <span className="text-zinc-500 text-xs ml-1">
+                            ({g.home_conf ?? "?"})
+                          </span>
+                        </td>
+                        <td className="px-3 py-2.5 text-zinc-400">{g.week}</td>
+                        <td className="px-3 py-2.5 font-medium text-amber-300 whitespace-nowrap">
+                          {pred}
+                        </td>
+                        <td className="px-3 py-2.5 text-right">
+                          {g.market_spread != null
+                            ? (g.market_spread > 0 ? "+" : "") +
+                              g.market_spread
+                            : "—"}
+                        </td>
+                        <td className="px-3 py-2.5 text-right">
+                          {g.model_spread != null
+                            ? (g.model_spread > 0 ? "+" : "") +
+                              g.model_spread.toFixed(1)
+                            : "—"}
+                        </td>
+                        <td className="px-3 py-2.5 text-right">
+                          <EdgeBadge
+                            value={g.spread_edge}
+                            lean={g.spread_lean}
+                          />
+                        </td>
+                        <td className="px-3 py-2.5 text-right">
+                          {g.market_total ?? "—"}
+                        </td>
+                        <td className="px-3 py-2.5 text-right">
+                          {g.model_total?.toFixed(1) ?? "—"}
+                        </td>
+                        <td className="px-3 py-2.5 text-right">
+                          <EdgeBadge
+                            value={g.total_edge}
+                            lean={g.total_lean}
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
