@@ -7,7 +7,7 @@ export default function Home() {
         <div className="mb-10">
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-zinc-400 mt-2">
-            College Football Power Ratings • Projections • Edges
+            CFB Power Ratings • Projections • Edges • NFL Props
           </p>
           <p className="text-zinc-500 text-sm mt-1">
             Last updated: {lastUpdated}
@@ -19,7 +19,7 @@ export default function Home() {
             href="/ratings"
             className="block rounded-xl border border-zinc-800 bg-zinc-900 p-6 hover:border-zinc-600 transition"
           >
-            <h2 className="text-xl font-semibold mb-2">Power Ratings</h2>
+            <h2 className="text-xl font-semibold mb-2">CFB Power Ratings</h2>
             <p className="text-zinc-400 text-sm">
               Full blended ratings from Makinen, Steele, SP+, and Massey.
             </p>
@@ -29,7 +29,7 @@ export default function Home() {
             href="/projections"
             className="block rounded-xl border border-zinc-800 bg-zinc-900 p-6 hover:border-zinc-600 transition"
           >
-            <h2 className="text-xl font-semibold mb-2">Weekly Projections</h2>
+            <h2 className="text-xl font-semibold mb-2">CFB Weekly Projections</h2>
             <p className="text-zinc-400 text-sm">
               Game-by-game spreads, totals, and edges vs the market.
             </p>
