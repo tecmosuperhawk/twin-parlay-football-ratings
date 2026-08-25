@@ -221,8 +221,23 @@ export default function NflPropsPage() {
     return sortAsc ? " ▲" : " ▼";
   }
 
+  function setPosFilter(p: PosFilter) {
+    setPos(p);
+    if (p === "QB") setSortKey("pass_yds");
+    else if (p === "RB") setSortKey("rush_yds");
+    else if (p === "WR" || p === "TE") setSortKey("rec_yds");
+    else setSortKey("pass_yds");
+    setSortAsc(false);
+  }
+
   const posBtns: PosFilter[] = ["ALL", "QB", "RB", "WR", "TE"];
-  const fpCount = data.filter((r) => r.fp_pass_yds != null || r.fp_rush_yds != null || r.fp_rec_yds != null).length;
+  const fpCount = data.filter(
+    (r) => r.fp_pass_yds != null || r.fp_rush_yds != null || r.fp_rec_yds != null
+  ).length;
+
+  const showPass = pos === "ALL" || pos === "QB";
+  const showRush = pos === "ALL" || pos === "QB" || pos === "RB";
+  const showRec = pos === "ALL" || pos === "RB" || pos === "WR" || pos === "TE";
 
   return (
     <main className="min-h-screen bg-zinc-950 text-white">
@@ -234,7 +249,7 @@ export default function NflPropsPage() {
           <h1 className="text-3xl font-bold mt-4">NFL Player Props</h1>
           <p className="text-zinc-400 mt-2">
             Week {week} — Our model (Clay + matchup) vs FantasyPros. Opp rank 1 =
-            toughest defense. FP columns blank until synced.
+            toughest defense.
           </p>
         </div>
 
@@ -242,7 +257,7 @@ export default function NflPropsPage() {
           {posBtns.map((p) => (
             <button
               key={p}
-              onClick={() => setPos(p)}
+              onClick={() => setPosFilter(p)}
               className={`px-3 py-1.5 rounded-lg text-sm border transition ${
                 pos === p
                   ? "bg-emerald-600 border-emerald-500 text-white"
@@ -259,9 +274,7 @@ export default function NflPropsPage() {
           </span>
         </div>
 
-        {error && (
-          <p className="text-red-400 text-sm mb-4">Error: {error}</p>
-        )}
+        {error && <p className="text-red-400 text-sm mb-4">Error: {error}</p>}
 
         {loading ? (
           <p className="text-zinc-400">Loading projections…</p>
@@ -279,97 +292,119 @@ export default function NflPropsPage() {
                   <th className="text-left px-2 py-3">Pos</th>
                   <th className="text-left px-2 py-3">Team</th>
                   <th className="text-left px-2 py-3">Opp</th>
-                  <th
-                    className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
-                    onClick={() => toggle("pass_yds")}
-                  >
-                    Pass Our{arrow("pass_yds")}
-                  </th>
-                  <th
-                    className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
-                    onClick={() => toggle("fp_pass_yds")}
-                  >
-                    Pass FP{arrow("fp_pass_yds")}
-                  </th>
-                  <th className="text-right px-2 py-3 whitespace-nowrap">Δ Pass</th>
-                  <th
-                    className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
-                    onClick={() => toggle("fp_pass_att")}
-                  >
-                    Att{arrow("fp_pass_att")}
-                  </th>
-                  <th
-                    className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
-                    onClick={() => toggle("fp_pass_cmp")}
-                  >
-                    Cmp{arrow("fp_pass_cmp")}
-                  </th>
-                  <th
-                    className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
-                    onClick={() => toggle("fp_pass_tds")}
-                  >
-                    Pass TD{arrow("fp_pass_tds")}
-                  </th>
-                  <th
-                    className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
-                    onClick={() => toggle("rush_yds")}
-                  >
-                    Rush Our{arrow("rush_yds")}
-                  </th>
-                  <th
-                    className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
-                    onClick={() => toggle("fp_rush_yds")}
-                  >
-                    Rush FP{arrow("fp_rush_yds")}
-                  </th>
-                  <th
-                    className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
-                    onClick={() => toggle("fp_rush_att")}
-                  >
-                    Ru Att{arrow("fp_rush_att")}
-                  </th>
-                  <th
-                    className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
-                    onClick={() => toggle("fp_rush_tds")}
-                  >
-                    Ru TD{arrow("fp_rush_tds")}
-                  </th>
-                  <th
-                    className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
-                    onClick={() => toggle("rec_yds")}
-                  >
-                    Rec Our{arrow("rec_yds")}
-                  </th>
-                  <th
-                    className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
-                    onClick={() => toggle("fp_rec_yds")}
-                  >
-                    Rec FP{arrow("fp_rec_yds")}
-                  </th>
-                  <th
-                    className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
-                    onClick={() => toggle("fp_rec")}
-                  >
-                    Rec{arrow("fp_rec")}
-                  </th>
-                  <th
-                    className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
-                    onClick={() => toggle("fp_rec_tds")}
-                  >
-                    Rec TD{arrow("fp_rec_tds")}
-                  </th>
-                  <th
-                    className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
-                    onClick={() => toggle("opp_pass_rk")}
-                  >
-                    vs Pass{arrow("opp_pass_rk")}
-                  </th>
-                  <th
-                    className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
-                    onClick={() => toggle("opp_rush_rk")}
-                  >
-                    vs Rush{arrow("opp_rush_rk")}
-                  </th>
+
+                  {showPass && (
+                    <>
+                      <th
+                        className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
+                        onClick={() => toggle("pass_yds")}
+                      >
+                        Pass Our{arrow("pass_yds")}
+                      </th>
+                      <th
+                        className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
+                        onClick={() => toggle("fp_pass_yds")}
+                      >
+                        Pass FP{arrow("fp_pass_yds")}
+                      </th>
+                      <th className="text-right px-2 py-3 whitespace-nowrap">
+                        Δ Pass
+                      </th>
+                      <th
+                        className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
+                        onClick={() => toggle("fp_pass_att")}
+                      >
+                        Att{arrow("fp_pass_att")}
+                      </th>
+                      <th
+                        className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
+                        onClick={() => toggle("fp_pass_cmp")}
+                      >
+                        Cmp{arrow("fp_pass_cmp")}
+                      </th>
+                      <th
+                        className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
+                        onClick={() => toggle("fp_pass_tds")}
+                      >
+                        Pass TD{arrow("fp_pass_tds")}
+                      </th>
+                    </>
+                  )}
+
+                  {showRush && (
+                    <>
+                      <th
+                        className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
+                        onClick={() => toggle("rush_yds")}
+                      >
+                        Rush Our{arrow("rush_yds")}
+                      </th>
+                      <th
+                        className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
+                        onClick={() => toggle("fp_rush_yds")}
+                      >
+                        Rush FP{arrow("fp_rush_yds")}
+                      </th>
+                      <th
+                        className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
+                        onClick={() => toggle("fp_rush_att")}
+                      >
+                        Ru Att{arrow("fp_rush_att")}
+                      </th>
+                      <th
+                        className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
+                        onClick={() => toggle("fp_rush_tds")}
+                      >
+                        Ru TD{arrow("fp_rush_tds")}
+                      </th>
+                    </>
+                  )}
+
+                  {showRec && (
+                    <>
+                      <th
+                        className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
+                        onClick={() => toggle("rec_yds")}
+                      >
+                        Rec Our{arrow("rec_yds")}
+                      </th>
+                      <th
+                        className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
+                        onClick={() => toggle("fp_rec_yds")}
+                      >
+                        Rec FP{arrow("fp_rec_yds")}
+                      </th>
+                      <th
+                        className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
+                        onClick={() => toggle("fp_rec")}
+                      >
+                        Rec{arrow("fp_rec")}
+                      </th>
+                      <th
+                        className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
+                        onClick={() => toggle("fp_rec_tds")}
+                      >
+                        Rec TD{arrow("fp_rec_tds")}
+                      </th>
+                    </>
+                  )}
+
+                  {showPass && (
+                    <th
+                      className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
+                      onClick={() => toggle("opp_pass_rk")}
+                    >
+                      vs Pass{arrow("opp_pass_rk")}
+                    </th>
+                  )}
+                  {showRush && (
+                    <th
+                      className="text-right px-2 py-3 cursor-pointer hover:text-white whitespace-nowrap"
+                      onClick={() => toggle("opp_rush_rk")}
+                    >
+                      vs Rush{arrow("opp_rush_rk")}
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -390,66 +425,86 @@ export default function NflPropsPage() {
                       <td className="px-2 py-2.5 text-zinc-400 whitespace-nowrap text-xs">
                         {r.opponent}
                       </td>
-                      <td className="px-2 py-2.5 text-right font-semibold text-emerald-400">
-                        {r.pass_yds || "—"}
-                      </td>
-                      <td className="px-2 py-2.5 text-right text-emerald-200/80">
-                        {fmt(r.fp_pass_yds, 1)}
-                      </td>
-                      <td
-                        className={`px-2 py-2.5 text-right text-xs ${
-                          dPass === null
-                            ? "text-zinc-600"
-                            : dPass > 5
-                              ? "text-emerald-400"
-                              : dPass < -5
-                                ? "text-red-400"
-                                : "text-zinc-400"
-                        }`}
-                      >
-                        {dPass === null
-                          ? "—"
-                          : `${dPass > 0 ? "+" : ""}${Math.round(dPass)}`}
-                      </td>
-                      <td className="px-2 py-2.5 text-right text-zinc-400">
-                        {fmt(r.fp_pass_att, 1)}
-                      </td>
-                      <td className="px-2 py-2.5 text-right text-zinc-400">
-                        {fmt(r.fp_pass_cmp, 1)}
-                      </td>
-                      <td className="px-2 py-2.5 text-right text-zinc-400">
-                        {fmt(r.fp_pass_tds, 2)}
-                      </td>
-                      <td className="px-2 py-2.5 text-right font-semibold text-sky-400">
-                        {r.rush_yds || "—"}
-                      </td>
-                      <td className="px-2 py-2.5 text-right text-sky-200/80">
-                        {fmt(r.fp_rush_yds, 1)}
-                      </td>
-                      <td className="px-2 py-2.5 text-right text-zinc-400">
-                        {fmt(r.fp_rush_att, 1)}
-                      </td>
-                      <td className="px-2 py-2.5 text-right text-zinc-400">
-                        {fmt(r.fp_rush_tds, 2)}
-                      </td>
-                      <td className="px-2 py-2.5 text-right font-semibold text-amber-400">
-                        {r.rec_yds || "—"}
-                      </td>
-                      <td className="px-2 py-2.5 text-right text-amber-200/80">
-                        {fmt(r.fp_rec_yds, 1)}
-                      </td>
-                      <td className="px-2 py-2.5 text-right text-zinc-400">
-                        {fmt(r.fp_rec, 1)}
-                      </td>
-                      <td className="px-2 py-2.5 text-right text-zinc-400">
-                        {fmt(r.fp_rec_tds, 2)}
-                      </td>
-                      <td className="px-2 py-2.5 text-right text-zinc-500">
-                        {r.opp_pass_rk || "—"}
-                      </td>
-                      <td className="px-2 py-2.5 text-right text-zinc-500">
-                        {r.opp_rush_rk || "—"}
-                      </td>
+
+                      {showPass && (
+                        <>
+                          <td className="px-2 py-2.5 text-right font-semibold text-emerald-400">
+                            {r.pass_yds || "—"}
+                          </td>
+                          <td className="px-2 py-2.5 text-right text-emerald-200/80">
+                            {fmt(r.fp_pass_yds, 1)}
+                          </td>
+                          <td
+                            className={`px-2 py-2.5 text-right text-xs ${
+                              dPass === null
+                                ? "text-zinc-600"
+                                : dPass > 5
+                                  ? "text-emerald-400"
+                                  : dPass < -5
+                                    ? "text-red-400"
+                                    : "text-zinc-400"
+                            }`}
+                          >
+                            {dPass === null
+                              ? "—"
+                              : `${dPass > 0 ? "+" : ""}${Math.round(dPass)}`}
+                          </td>
+                          <td className="px-2 py-2.5 text-right text-zinc-400">
+                            {fmt(r.fp_pass_att, 1)}
+                          </td>
+                          <td className="px-2 py-2.5 text-right text-zinc-400">
+                            {fmt(r.fp_pass_cmp, 1)}
+                          </td>
+                          <td className="px-2 py-2.5 text-right text-zinc-400">
+                            {fmt(r.fp_pass_tds, 2)}
+                          </td>
+                        </>
+                      )}
+
+                      {showRush && (
+                        <>
+                          <td className="px-2 py-2.5 text-right font-semibold text-sky-400">
+                            {r.rush_yds || "—"}
+                          </td>
+                          <td className="px-2 py-2.5 text-right text-sky-200/80">
+                            {fmt(r.fp_rush_yds, 1)}
+                          </td>
+                          <td className="px-2 py-2.5 text-right text-zinc-400">
+                            {fmt(r.fp_rush_att, 1)}
+                          </td>
+                          <td className="px-2 py-2.5 text-right text-zinc-400">
+                            {fmt(r.fp_rush_tds, 2)}
+                          </td>
+                        </>
+                      )}
+
+                      {showRec && (
+                        <>
+                          <td className="px-2 py-2.5 text-right font-semibold text-amber-400">
+                            {r.rec_yds || "—"}
+                          </td>
+                          <td className="px-2 py-2.5 text-right text-amber-200/80">
+                            {fmt(r.fp_rec_yds, 1)}
+                          </td>
+                          <td className="px-2 py-2.5 text-right text-zinc-400">
+                            {fmt(r.fp_rec, 1)}
+                          </td>
+                          <td className="px-2 py-2.5 text-right text-zinc-400">
+                            {fmt(r.fp_rec_tds, 2)}
+                          </td>
+                        </>
+                      )}
+
+                      {showPass && (
+                        <td className="px-2 py-2.5 text-right text-zinc-500">
+                          {r.opp_pass_rk || "—"}
+                        </td>
+                      )}
+                      {showRush && (
+                        <td className="px-2 py-2.5 text-right text-zinc-500">
+                          {r.opp_rush_rk || "—"}
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -459,8 +514,8 @@ export default function NflPropsPage() {
         )}
 
         <p className="text-sm text-zinc-500 mt-4">
-          Δ Pass = Our − FP. Green = we are higher than FP. Only {fpCount} players
-          have FP stats until sync coverage improves. Rank 1 = toughest defense.
+          Δ Pass = Our − FP. Columns change with position filter. Rank 1 =
+          toughest defense.
         </p>
       </div>
     </main>
