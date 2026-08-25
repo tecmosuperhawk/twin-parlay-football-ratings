@@ -69,18 +69,12 @@ function practicalPrediction(
 ): string {
   const mkt = marketSpread ?? homeSpread;
   const mktTot = marketTotal ?? modelTotal;
+  const spreadDisagreement = mkt - homeSpread; // >0 model likes home more than market
 
-  // Model vs market disagreement (positive = model likes home more than market)
-  const spreadDisagreement = mkt - homeSpread;
-  // e.g. market -5.5, model -1.8 → disagreement = -3.7 → model likes away (Hawaii)
-
-  // Start from model split
   let homeRaw = (modelTotal - homeSpread) / 2;
   let awayRaw = (modelTotal + homeSpread) / 2;
 
-  // --- Narrative leans ---
-
-  // 1) If model total is clearly above market, push scoring up
+  // Push scoring up when model total is clearly over market
   const totalBump = Math.max(0, modelTotal - mktTot);
   if (totalBump >= 2) {
     const extra = Math.min(7, totalBump * 1.2);
@@ -88,82 +82,80 @@ function practicalPrediction(
     awayRaw += extra * 0.55;
   }
 
-  // 2) Significant model-vs-market ATS edge → lean into the model side harder
-  //    and occasionally call an outright upset on medium dogs
-  if (Math.abs(spreadDisagreement) >= 2.5) {
-    // Model likes home more than market
+  // Narrative ATS lean ONLY in non-blowout games
+  if (Math.abs(homeSpread) < 10 && Math.abs(spreadDisagreement) >= 2.5) {
     if (spreadDisagreement > 0) {
       homeRaw += 2.5;
       awayRaw -= 1.0;
     } else {
-      // Model likes away more than market (e.g. Hawaii)
       awayRaw += 2.5;
       homeRaw -= 1.0;
     }
   }
 
-  // 3) Close model games (|spread| < 3): take a shot — flip ~35% of the time
-  //    toward the side the model likes vs market, else a mild favorite lean
+  // Close games: occasional "take a shot" — still only if |spread| < 3
   if (Math.abs(homeSpread) < 3) {
-    const takeShot = Math.abs(spreadDisagreement) >= 2 || Math.abs(homeSpread) < 1.5;
-    if (takeShot) {
-      // Prefer the side model likes relative to market
-      if (spreadDisagreement < -1) {
-        // model on away
-        awayRaw += 3.5;
-        homeRaw -= 1.5;
-      } else if (spreadDisagreement > 1) {
-        homeRaw += 3.5;
-        awayRaw -= 1.5;
-      } else if (homeSpread < 0) {
-        homeRaw += 2;
-      } else {
-        awayRaw += 2;
-      }
+    if (spreadDisagreement < -1) {
+      awayRaw += 3.5;
+      homeRaw -= 1.5;
+    } else if (spreadDisagreement > 1) {
+      homeRaw += 3.5;
+      awayRaw -= 1.5;
+    } else if (homeSpread < 0) {
+      homeRaw += 2;
+    } else {
+      awayRaw += 2;
     }
   }
 
-  // 4) Never crown a 14+ point dog as winner
-  let margin = homeRaw - awayRaw;
-  if (homeSpread <= -14 && margin < 0) {
-    const mid = (homeRaw + awayRaw) / 2;
-    homeRaw = mid + 10;
-    awayRaw = mid - 7;
-  }
-  if (homeSpread >= 14 && margin > 0) {
-    const mid = (homeRaw + awayRaw) / 2;
-    awayRaw = mid + 10;
-    homeRaw = mid - 7;
+  // Hard rule: double-digit dogs do NOT win outright
+  if (homeSpread <= -10) {
+    // home is favorite by 10+ → home must win
+    if (homeRaw <= awayRaw) {
+      const mid = (homeRaw + awayRaw) / 2;
+      homeRaw = mid + Math.max(7, Math.abs(homeSpread) * 0.35);
+      awayRaw = mid - Math.max(3, Math.abs(homeSpread) * 0.2);
+    }
+  } else if (homeSpread >= 10) {
+    // home is dog by 10+ → away must win
+    if (awayRaw <= homeRaw) {
+      const mid = (homeRaw + awayRaw) / 2;
+      awayRaw = mid + Math.max(7, Math.abs(homeSpread) * 0.35);
+      homeRaw = mid - Math.max(3, Math.abs(homeSpread) * 0.2);
+    }
   }
 
-  // Snap to common scores
   let homePts = nearestCommon(homeRaw);
   let awayPts = nearestCommon(awayRaw);
 
+  // Enforce favorite win again after snapping (catches edge cases)
+  if (homeSpread <= -10 && homePts <= awayPts) {
+    homePts = nearestCommon(awayPts + Math.max(7, Math.round(Math.abs(homeSpread) * 0.4)));
+    if (homePts <= awayPts) homePts = awayPts + 7;
+  }
+  if (homeSpread >= 10 && awayPts <= homePts) {
+    awayPts = nearestCommon(homePts + Math.max(7, Math.round(Math.abs(homeSpread) * 0.4)));
+    if (awayPts <= homePts) awayPts = homePts + 7;
+  }
+
   // Avoid ties
   if (homePts === awayPts) {
-    if (homeRaw >= awayRaw) homePts = nearestCommon(homePts + 7);
-    else awayPts = nearestCommon(awayPts + 7);
+    if (homeSpread <= 0) homePts = awayPts + 7;
+    else awayPts = homePts + 7;
   }
 
-  // Avoid 1–3 point “ugly” finals most of the time → stretch to a field goal+ margin
-  margin = homePts - awayPts;
-  if (Math.abs(margin) > 0 && Math.abs(margin) <= 3) {
-    if (homePts > awayPts) {
-      homePts = nearestCommon(homePts + 4);
-      if (homePts <= awayPts) homePts = awayPts + 7;
-    } else {
-      awayPts = nearestCommon(awayPts + 4);
-      if (awayPts <= homePts) awayPts = homePts + 7;
-    }
+  // Avoid ugly 1–3 point finals unless it was a true pick'em
+  if (Math.abs(homePts - awayPts) <= 3 && Math.abs(homeSpread) >= 1) {
+    if (homePts > awayPts) homePts = awayPts + 7;
+    else awayPts = homePts + 7;
   }
 
-  // Blowouts: if model is double-digit, keep a decisive look
+  // Keep true blowouts looking like blowouts
   if (homeSpread <= -20 && homePts - awayPts < 17) {
-    homePts = nearestCommon(Math.max(homePts, awayPts + 21));
+    homePts = awayPts + 21;
   }
   if (homeSpread >= 20 && awayPts - homePts < 17) {
-    awayPts = nearestCommon(Math.max(awayPts, homePts + 21));
+    awayPts = homePts + 21;
   }
 
   const winner = homePts > awayPts ? homeTeam : awayTeam;
