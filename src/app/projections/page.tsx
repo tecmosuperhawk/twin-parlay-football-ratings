@@ -36,9 +36,9 @@ const CONFERENCES = [
   "Independent",
 ];
 
-/** Realistic CFB finals — prefer common “football” numbers. */
 const COMMON_SCORES = [
-  7, 10, 13, 14, 17, 20, 21, 24, 27, 28, 31, 34, 35, 38, 41, 42, 45, 48, 49, 52, 56,
+  7, 10, 13, 14, 17, 20, 21, 24, 27, 28, 31, 34, 35, 38, 41, 42, 45, 48, 49, 52,
+  56,
 ];
 
 function nearestCommon(x: number): number {
@@ -54,11 +54,6 @@ function nearestCommon(x: number): number {
   return best;
 }
 
-/**
- * homeSpread: model home line (neg = home favored)
- * marketSpread: market home line
- * modelTotal / marketTotal: optional; used to push scoring up/down
- */
 function practicalPrediction(
   homeTeam: string,
   awayTeam: string,
@@ -69,12 +64,11 @@ function practicalPrediction(
 ): string {
   const mkt = marketSpread ?? homeSpread;
   const mktTot = marketTotal ?? modelTotal;
-  const spreadDisagreement = mkt - homeSpread; // >0 model likes home more than market
+  const spreadDisagreement = mkt - homeSpread;
 
   let homeRaw = (modelTotal - homeSpread) / 2;
   let awayRaw = (modelTotal + homeSpread) / 2;
 
-  // Push scoring up when model total is clearly over market
   const totalBump = Math.max(0, modelTotal - mktTot);
   if (totalBump >= 2) {
     const extra = Math.min(7, totalBump * 1.2);
@@ -82,7 +76,6 @@ function practicalPrediction(
     awayRaw += extra * 0.55;
   }
 
-  // Narrative ATS lean ONLY in non-blowout games
   if (Math.abs(homeSpread) < 10 && Math.abs(spreadDisagreement) >= 2.5) {
     if (spreadDisagreement > 0) {
       homeRaw += 2.5;
@@ -93,7 +86,6 @@ function practicalPrediction(
     }
   }
 
-  // Close games: occasional "take a shot" — still only if |spread| < 3
   if (Math.abs(homeSpread) < 3) {
     if (spreadDisagreement < -1) {
       awayRaw += 3.5;
@@ -108,16 +100,13 @@ function practicalPrediction(
     }
   }
 
-  // Hard rule: double-digit dogs do NOT win outright
   if (homeSpread <= -10) {
-    // home is favorite by 10+ → home must win
     if (homeRaw <= awayRaw) {
       const mid = (homeRaw + awayRaw) / 2;
       homeRaw = mid + Math.max(7, Math.abs(homeSpread) * 0.35);
       awayRaw = mid - Math.max(3, Math.abs(homeSpread) * 0.2);
     }
   } else if (homeSpread >= 10) {
-    // home is dog by 10+ → away must win
     if (awayRaw <= homeRaw) {
       const mid = (homeRaw + awayRaw) / 2;
       awayRaw = mid + Math.max(7, Math.abs(homeSpread) * 0.35);
@@ -128,29 +117,29 @@ function practicalPrediction(
   let homePts = nearestCommon(homeRaw);
   let awayPts = nearestCommon(awayRaw);
 
-  // Enforce favorite win again after snapping (catches edge cases)
   if (homeSpread <= -10 && homePts <= awayPts) {
-    homePts = nearestCommon(awayPts + Math.max(7, Math.round(Math.abs(homeSpread) * 0.4)));
+    homePts = nearestCommon(
+      awayPts + Math.max(7, Math.round(Math.abs(homeSpread) * 0.4))
+    );
     if (homePts <= awayPts) homePts = awayPts + 7;
   }
   if (homeSpread >= 10 && awayPts <= homePts) {
-    awayPts = nearestCommon(homePts + Math.max(7, Math.round(Math.abs(homeSpread) * 0.4)));
+    awayPts = nearestCommon(
+      homePts + Math.max(7, Math.round(Math.abs(homeSpread) * 0.4))
+    );
     if (awayPts <= homePts) awayPts = homePts + 7;
   }
 
-  // Avoid ties
   if (homePts === awayPts) {
     if (homeSpread <= 0) homePts = awayPts + 7;
     else awayPts = homePts + 7;
   }
 
-  // Avoid ugly 1–3 point finals unless it was a true pick'em
   if (Math.abs(homePts - awayPts) <= 3 && Math.abs(homeSpread) >= 1) {
     if (homePts > awayPts) homePts = awayPts + 7;
     else awayPts = homePts + 7;
   }
 
-  // Keep true blowouts looking like blowouts
   if (homeSpread <= -20 && homePts - awayPts < 17) {
     homePts = awayPts + 21;
   }
@@ -186,27 +175,37 @@ function EdgeBadge({
   );
 }
 
+function sortBtn(active: boolean) {
+  return `px-3 py-2 rounded-lg text-sm border ${
+    active
+      ? "bg-emerald-900/40 border-emerald-600 text-emerald-300"
+      : "border-zinc-700 text-zinc-300 hover:border-zinc-500"
+  }`;
+}
+
 export default function ProjectionsPage() {
   const [games, setGames] = useState<GameRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [confFilter, setConfFilter] = useState("All");
-  const [sortKey, setSortKey] = useState<"default" | "ats" | "total">("default");
+  const [sortKey, setSortKey] = useState<
+    "default" | "ats" | "total" | "favs" | "dogs" | "overs" | "unders"
+  >("default");
 
   useEffect(() => {
     async function load() {
       const supabase = createClient();
       const { data } = await supabase
-              .from("games")
-              .select(
-                `
-                id, week, neutral, market_spread, market_total,
-                away:away_team_id(name, conference),
-                home:home_team_id(name, conference),
-                projections(model_spread, spread_edge, spread_lean, model_total, total_edge, total_lean)
-              `
-              )
-              .eq("status", "scheduled")
-              .order("week");
+        .from("games")
+        .select(
+          `
+          id, week, neutral, market_spread, market_total,
+          away:away_team_id(name, conference),
+          home:home_team_id(name, conference),
+          projections(model_spread, spread_edge, spread_lean, model_total, total_edge, total_lean)
+        `
+        )
+        .eq("status", "scheduled")
+        .order("week");
 
       if (!data) {
         setLoading(false);
@@ -248,14 +247,48 @@ export default function ProjectionsPage() {
         (g) => g.away_conf === confFilter || g.home_conf === confFilter
       );
     }
-    if (sortKey === "ats") {
-      list = [...list].sort(
-        (a, b) => Math.abs(b.spread_edge ?? 0) - Math.abs(a.spread_edge ?? 0)
-      );
+
+    const abs = (n: number | null) => Math.abs(n ?? 0);
+    const homeFav = (g: GameRow) => (g.market_spread ?? 0) < 0;
+    const leanHome = (g: GameRow) => (g.spread_edge ?? 0) > 0;
+    const isFav = (g: GameRow) =>
+      g.spread_edge != null &&
+      abs(g.spread_edge) >= 1.5 &&
+      homeFav(g) === leanHome(g);
+    const isDog = (g: GameRow) =>
+      g.spread_edge != null &&
+      abs(g.spread_edge) >= 1.5 &&
+      homeFav(g) !== leanHome(g);
+
+    list = [...list];
+    if (sortKey === "ats" || sortKey === "default") {
+      list.sort((a, b) => abs(b.spread_edge) - abs(a.spread_edge));
     } else if (sortKey === "total") {
-      list = [...list].sort(
-        (a, b) => Math.abs(b.total_edge ?? 0) - Math.abs(a.total_edge ?? 0)
-      );
+      list.sort((a, b) => abs(b.total_edge) - abs(a.total_edge));
+    } else if (sortKey === "favs") {
+      list.sort((a, b) => {
+        const d = (isFav(a) ? 0 : 1) - (isFav(b) ? 0 : 1);
+        return d !== 0 ? d : abs(b.spread_edge) - abs(a.spread_edge);
+      });
+    } else if (sortKey === "dogs") {
+      list.sort((a, b) => {
+        const d = (isDog(a) ? 0 : 1) - (isDog(b) ? 0 : 1);
+        return d !== 0 ? d : abs(b.spread_edge) - abs(a.spread_edge);
+      });
+    } else if (sortKey === "overs") {
+      list.sort((a, b) => {
+        const d =
+          ((a.total_edge ?? 0) >= 1.5 ? 0 : 1) -
+          ((b.total_edge ?? 0) >= 1.5 ? 0 : 1);
+        return d !== 0 ? d : abs(b.total_edge) - abs(a.total_edge);
+      });
+    } else if (sortKey === "unders") {
+      list.sort((a, b) => {
+        const d =
+          ((a.total_edge ?? 0) <= -1.5 ? 0 : 1) -
+          ((b.total_edge ?? 0) <= -1.5 ? 0 : 1);
+        return d !== 0 ? d : abs(b.total_edge) - abs(a.total_edge);
+      });
     }
     return list;
   }, [games, confFilter, sortKey]);
@@ -265,7 +298,7 @@ export default function ProjectionsPage() {
       <div className="max-w-6xl mx-auto px-4 py-10">
         <div className="mb-8">
           <a href="/" className="text-zinc-400 hover:text-white text-sm">
-            ← Back to Dashboard
+            &larr; Back to Dashboard
           </a>
           <h1 className="text-3xl font-bold mt-4">CFB Weekly Projections</h1>
           <p className="text-zinc-400 mt-2">
@@ -290,23 +323,39 @@ export default function ProjectionsPage() {
 
           <button
             onClick={() => setSortKey("ats")}
-            className={`px-3 py-2 rounded-lg text-sm border ${
-              sortKey === "ats"
-                ? "bg-emerald-900/40 border-emerald-600 text-emerald-300"
-                : "border-zinc-700 text-zinc-300 hover:border-zinc-500"
-            }`}
+            className={sortBtn(sortKey === "ats")}
           >
             Biggest ATS Edge
           </button>
           <button
+            onClick={() => setSortKey("favs")}
+            className={sortBtn(sortKey === "favs")}
+          >
+            Favorites
+          </button>
+          <button
+            onClick={() => setSortKey("dogs")}
+            className={sortBtn(sortKey === "dogs")}
+          >
+            Underdogs
+          </button>
+          <button
             onClick={() => setSortKey("total")}
-            className={`px-3 py-2 rounded-lg text-sm border ${
-              sortKey === "total"
-                ? "bg-emerald-900/40 border-emerald-600 text-emerald-300"
-                : "border-zinc-700 text-zinc-300 hover:border-zinc-500"
-            }`}
+            className={sortBtn(sortKey === "total")}
           >
             Biggest Totals Edge
+          </button>
+          <button
+            onClick={() => setSortKey("overs")}
+            className={sortBtn(sortKey === "overs")}
+          >
+            Overs
+          </button>
+          <button
+            onClick={() => setSortKey("unders")}
+            className={sortBtn(sortKey === "unders")}
+          >
+            Unders
           </button>
           <button
             onClick={() => setSortKey("default")}
@@ -376,8 +425,7 @@ export default function ProjectionsPage() {
                         </td>
                         <td className="px-3 py-2.5 text-right">
                           {g.market_spread != null
-                            ? (g.market_spread > 0 ? "+" : "") +
-                              g.market_spread
+                            ? (g.market_spread > 0 ? "+" : "") + g.market_spread
                             : "—"}
                         </td>
                         <td className="px-3 py-2.5 text-right">
@@ -399,10 +447,7 @@ export default function ProjectionsPage() {
                           {g.model_total?.toFixed(1) ?? "—"}
                         </td>
                         <td className="px-3 py-2.5 text-right">
-                          <EdgeBadge
-                            value={g.total_edge}
-                            lean={g.total_lean}
-                          />
+                          <EdgeBadge value={g.total_edge} lean={g.total_lean} />
                         </td>
                       </tr>
                     );
