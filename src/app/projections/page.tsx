@@ -196,18 +196,17 @@ export default function ProjectionsPage() {
     async function load() {
       const supabase = createClient();
       const { data } = await supabase
-        .from("games")
-        .select(
-          `
-          id, week, neutral, market_spread, market_total,
-          away:away_team_id(name, conference),
-          home:home_team_id(name, conference),
-          projections(model_spread, spread_edge, spread_lean, model_total, total_edge, total_lean)
-        `
-        )
-                )
-        .eq("status", "scheduled")
-        .order("week");
+              .from("games")
+              .select(
+                `
+                id, week, neutral, market_spread, market_total,
+                away:away_team_id(name, conference),
+                home:home_team_id(name, conference),
+                projections(model_spread, spread_edge, spread_lean, model_total, total_edge, total_lean)
+              `
+              )
+              .eq("status", "scheduled")
+              .order("week");
 
       if (!data) {
         setLoading(false);
