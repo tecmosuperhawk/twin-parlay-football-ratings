@@ -24,7 +24,15 @@ export default function Home() {
               Full blended ratings from Makinen, Steele, SP+, and Massey.
             </p>
           </a>
-
+          <a
+            href="/results"
+            className="block rounded-xl border border-zinc-800 bg-zinc-900 p-6 hover:border-zinc-600 transition"
+          >
+            <h2 className="text-xl font-semibold mb-2">Results</h2>
+            <p className="text-zinc-400 text-sm">
+              Week-by-week model ATS and totals record vs market.
+            </p>
+          </a>
           <a
             href="/projections"
             className="block rounded-xl border border-zinc-800 bg-zinc-900 p-6 hover:border-zinc-600 transition"
