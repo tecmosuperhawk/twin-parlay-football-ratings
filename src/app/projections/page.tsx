@@ -21,6 +21,15 @@ type GameRow = {
   total_lean: string | null;
 };
 
+type SortKey =
+  | "default"
+  | "ats"
+  | "total"
+  | "favs"
+  | "dogs"
+  | "overs"
+  | "unders";
+
 const CONFERENCES = [
   "All",
   "SEC",
@@ -183,13 +192,41 @@ function sortBtn(active: boolean) {
   }`;
 }
 
+function isFavLean(g: GameRow) {
+  if (g.spread_edge == null || g.market_spread == null) return false;
+  if (Math.abs(g.spread_edge) < 1.5) return false;
+  const homeIsFav = g.market_spread < 0;
+  const modelLikesHome = g.spread_edge > 0;
+  return homeIsFav === modelLikesHome;
+}
+
+function isDogLean(g: GameRow) {
+  if (g.spread_edge == null || g.market_spread == null) return false;
+  if (Math.abs(g.spread_edge) < 1.5) return false;
+  const homeIsFav = g.market_spread < 0;
+  const modelLikesHome = g.spread_edge > 0;
+  return homeIsFav !== modelLikesHome;
+}
+
 export default function ProjectionsPage() {
   const [games, setGames] = useState<GameRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [confFilter, setConfFilter] = useState("All");
-  const [sortKey, setSortKey] = useState<
-    "default" | "ats" | "total" | "favs" | "dogs" | "overs" | "unders"
-  >("default");
+  const [sortKey, setSortKey] = useState<SortKey>("default");
+
+  const showAts =
+    sortKey === "default" ||
+    sortKey === "ats" ||
+    sortKey === "favs" ||
+    sortKey === "dogs";
+  const showTotals =
+    sortKey === "default" ||
+    sortKey === "ats" ||
+    sortKey === "total" ||
+    sortKey === "overs" ||
+    sortKey === "unders";
+  const atsOnly = sortKey === "favs" || sortKey === "dogs";
+  const totOnly = sortKey === "overs" || sortKey === "unders";
 
   useEffect(() => {
     async function load() {
@@ -248,47 +285,19 @@ export default function ProjectionsPage() {
       );
     }
 
-    const abs = (n: number | null) => Math.abs(n ?? 0);
-    const homeFav = (g: GameRow) => (g.market_spread ?? 0) < 0;
-    const leanHome = (g: GameRow) => (g.spread_edge ?? 0) > 0;
-    const isFav = (g: GameRow) =>
-      g.spread_edge != null &&
-      abs(g.spread_edge) >= 1.5 &&
-      homeFav(g) === leanHome(g);
-    const isDog = (g: GameRow) =>
-      g.spread_edge != null &&
-      abs(g.spread_edge) >= 1.5 &&
-      homeFav(g) !== leanHome(g);
+    if (sortKey === "favs") list = list.filter(isFavLean);
+    if (sortKey === "dogs") list = list.filter(isDogLean);
+    if (sortKey === "overs")
+      list = list.filter((g) => (g.total_edge ?? 0) >= 1.5);
+    if (sortKey === "unders")
+      list = list.filter((g) => (g.total_edge ?? 0) <= -1.5);
 
+    const abs = (n: number | null) => Math.abs(n ?? 0);
     list = [...list];
-    if (sortKey === "ats" || sortKey === "default") {
-      list.sort((a, b) => abs(b.spread_edge) - abs(a.spread_edge));
-    } else if (sortKey === "total") {
+    if (sortKey === "total" || sortKey === "overs" || sortKey === "unders") {
       list.sort((a, b) => abs(b.total_edge) - abs(a.total_edge));
-    } else if (sortKey === "favs") {
-      list.sort((a, b) => {
-        const d = (isFav(a) ? 0 : 1) - (isFav(b) ? 0 : 1);
-        return d !== 0 ? d : abs(b.spread_edge) - abs(a.spread_edge);
-      });
-    } else if (sortKey === "dogs") {
-      list.sort((a, b) => {
-        const d = (isDog(a) ? 0 : 1) - (isDog(b) ? 0 : 1);
-        return d !== 0 ? d : abs(b.spread_edge) - abs(a.spread_edge);
-      });
-    } else if (sortKey === "overs") {
-      list.sort((a, b) => {
-        const d =
-          ((a.total_edge ?? 0) >= 1.5 ? 0 : 1) -
-          ((b.total_edge ?? 0) >= 1.5 ? 0 : 1);
-        return d !== 0 ? d : abs(b.total_edge) - abs(a.total_edge);
-      });
-    } else if (sortKey === "unders") {
-      list.sort((a, b) => {
-        const d =
-          ((a.total_edge ?? 0) <= -1.5 ? 0 : 1) -
-          ((b.total_edge ?? 0) <= -1.5 ? 0 : 1);
-        return d !== 0 ? d : abs(b.total_edge) - abs(a.total_edge);
-      });
+    } else {
+      list.sort((a, b) => abs(b.spread_edge) - abs(a.spread_edge));
     }
     return list;
   }, [games, confFilter, sortKey]);
@@ -321,40 +330,22 @@ export default function ProjectionsPage() {
             ))}
           </select>
 
-          <button
-            onClick={() => setSortKey("ats")}
-            className={sortBtn(sortKey === "ats")}
-          >
+          <button onClick={() => setSortKey("ats")} className={sortBtn(sortKey === "ats")}>
             Biggest ATS Edge
           </button>
-          <button
-            onClick={() => setSortKey("favs")}
-            className={sortBtn(sortKey === "favs")}
-          >
+          <button onClick={() => setSortKey("favs")} className={sortBtn(sortKey === "favs")}>
             Favorites
           </button>
-          <button
-            onClick={() => setSortKey("dogs")}
-            className={sortBtn(sortKey === "dogs")}
-          >
+          <button onClick={() => setSortKey("dogs")} className={sortBtn(sortKey === "dogs")}>
             Underdogs
           </button>
-          <button
-            onClick={() => setSortKey("total")}
-            className={sortBtn(sortKey === "total")}
-          >
+          <button onClick={() => setSortKey("total")} className={sortBtn(sortKey === "total")}>
             Biggest Totals Edge
           </button>
-          <button
-            onClick={() => setSortKey("overs")}
-            className={sortBtn(sortKey === "overs")}
-          >
+          <button onClick={() => setSortKey("overs")} className={sortBtn(sortKey === "overs")}>
             Overs
           </button>
-          <button
-            onClick={() => setSortKey("unders")}
-            className={sortBtn(sortKey === "unders")}
-          >
+          <button onClick={() => setSortKey("unders")} className={sortBtn(sortKey === "unders")}>
             Unders
           </button>
           <button
@@ -380,12 +371,20 @@ export default function ProjectionsPage() {
                     <th className="text-left px-3 py-3">Matchup</th>
                     <th className="text-left px-3 py-3">Week</th>
                     <th className="text-left px-3 py-3">Practical Prediction</th>
-                    <th className="text-right px-3 py-3">Mkt Spread</th>
-                    <th className="text-right px-3 py-3">Model</th>
-                    <th className="text-right px-3 py-3">ATS Edge</th>
-                    <th className="text-right px-3 py-3">Mkt Total</th>
-                    <th className="text-right px-3 py-3">Model Tot</th>
-                    <th className="text-right px-3 py-3">Tot Edge</th>
+                    {showAts && !totOnly && (
+                      <>
+                        <th className="text-right px-3 py-3">Mkt Spread</th>
+                        <th className="text-right px-3 py-3">Model</th>
+                        <th className="text-right px-3 py-3">ATS Edge</th>
+                      </>
+                    )}
+                    {showTotals && !atsOnly && (
+                      <>
+                        <th className="text-right px-3 py-3">Mkt Total</th>
+                        <th className="text-right px-3 py-3">Model Tot</th>
+                        <th className="text-right px-3 py-3">Tot Edge</th>
+                      </>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -423,32 +422,44 @@ export default function ProjectionsPage() {
                         <td className="px-3 py-2.5 font-medium text-amber-300 whitespace-nowrap">
                           {pred}
                         </td>
-                        <td className="px-3 py-2.5 text-right">
-                          {g.market_spread != null
-                            ? (g.market_spread > 0 ? "+" : "") + g.market_spread
-                            : "—"}
-                        </td>
-                        <td className="px-3 py-2.5 text-right">
-                          {g.model_spread != null
-                            ? (g.model_spread > 0 ? "+" : "") +
-                              g.model_spread.toFixed(1)
-                            : "—"}
-                        </td>
-                        <td className="px-3 py-2.5 text-right">
-                          <EdgeBadge
-                            value={g.spread_edge}
-                            lean={g.spread_lean}
-                          />
-                        </td>
-                        <td className="px-3 py-2.5 text-right">
-                          {g.market_total ?? "—"}
-                        </td>
-                        <td className="px-3 py-2.5 text-right">
-                          {g.model_total?.toFixed(1) ?? "—"}
-                        </td>
-                        <td className="px-3 py-2.5 text-right">
-                          <EdgeBadge value={g.total_edge} lean={g.total_lean} />
-                        </td>
+                        {showAts && !totOnly && (
+                          <>
+                            <td className="px-3 py-2.5 text-right">
+                              {g.market_spread != null
+                                ? (g.market_spread > 0 ? "+" : "") +
+                                  g.market_spread
+                                : "—"}
+                            </td>
+                            <td className="px-3 py-2.5 text-right">
+                              {g.model_spread != null
+                                ? (g.model_spread > 0 ? "+" : "") +
+                                  g.model_spread.toFixed(1)
+                                : "—"}
+                            </td>
+                            <td className="px-3 py-2.5 text-right">
+                              <EdgeBadge
+                                value={g.spread_edge}
+                                lean={g.spread_lean}
+                              />
+                            </td>
+                          </>
+                        )}
+                        {showTotals && !atsOnly && (
+                          <>
+                            <td className="px-3 py-2.5 text-right">
+                              {g.market_total ?? "—"}
+                            </td>
+                            <td className="px-3 py-2.5 text-right">
+                              {g.model_total?.toFixed(1) ?? "—"}
+                            </td>
+                            <td className="px-3 py-2.5 text-right">
+                              <EdgeBadge
+                                value={g.total_edge}
+                                lean={g.total_lean}
+                              />
+                            </td>
+                          </>
+                        )}
                       </tr>
                     );
                   })}
