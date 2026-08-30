@@ -77,8 +77,8 @@ export default function ResultsPage() {
           .order("week"),
         supabase.from("model_record").select("*").order("graded_at"),
       ]);
-      setGames((gameData as FinalGame[]) ?? []);
-      setRecords((recordData as RecordRow[]) ?? []);
+      setGames((gameData as unknown as FinalGame[]) ?? []);
+      setRecords((recordData as unknown as RecordRow[]) ?? []);
       setLoading(false);
     }
     load();
