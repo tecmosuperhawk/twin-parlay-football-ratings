@@ -205,6 +205,8 @@ export default function ProjectionsPage() {
           projections(model_spread, spread_edge, spread_lean, model_total, total_edge, total_lean)
         `
         )
+                )
+        .eq("status", "scheduled")
         .order("week");
 
       if (!data) {
