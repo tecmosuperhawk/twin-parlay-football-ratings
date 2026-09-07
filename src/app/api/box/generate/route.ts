@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { heuristicBox, type BoxScore, type Sport } from "@/lib/boxScore";
+import {
+  extractRoster,
+  heuristicBox,
+  type BoxScore,
+  type Sport,
+} from "@/lib/boxScore";
 import { createClient } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
@@ -88,7 +93,7 @@ ${previews.slice(0, 24000)}`;
       box = null;
     }
   }
-import { extractRoster, heuristicBox, type BoxScore, type Sport } from "@/lib/boxScore";
+
   if (!box) {
     const parsed = extractRoster(`${depth}\n${previews}`);
     box = heuristicBox({
@@ -104,28 +109,3 @@ import { extractRoster, heuristicBox, type BoxScore, type Sport } from "@/lib/bo
       homeRBs: body.homeRBs || parsed.rbs,
       awayRBs: body.awayRBs || parsed.rbs,
       homeWRs: body.homeWRs || parsed.wrs,
-      awayWRs: body.awayWRs || parsed.wrs,
-    });
-    used = "heuristic";
-  }
-
-  const supabase = createClient();
-  await supabase.from("box_projections").insert({
-    sport,
-    week: body.week || null,
-    away,
-    home,
-    venue: body.venue || null,
-    market_spread: marketSpread,
-    market_total: marketTotal,
-    model_spread: modelSpread,
-    model_total: modelTotal,
-    pred_away_score: box.awayScore,
-    pred_home_score: box.homeScore,
-    box,
-    sources: [previews, depth].filter(Boolean).join("\n\n---\n\n").slice(0, 8000),
-    notes: used,
-  });
-
-  return NextResponse.json({ used, box });
-}
