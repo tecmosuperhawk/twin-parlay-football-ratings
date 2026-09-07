@@ -45,9 +45,9 @@ export default function BoxStudioPage() {
   const [away, setAway] = useState("");
   const [home, setHome] = useState("");
   const [venue, setVenue] = useState("");
-  const [week, setWeek] = useState("1");
-  const [modelSpread, setModelSpread] = useState("-7");
-  const [modelTotal, setModelTotal] = useState("48");
+  const [week, setWeek] = useState("");
+  const [modelSpread, setModelSpread] = useState("");
+  const [modelTotal, setModelTotal] = useState("");
   const [marketSpread, setMarketSpread] = useState("");
   const [marketTotal, setMarketTotal] = useState("");
   const [depth, setDepth] = useState("");
@@ -58,25 +58,81 @@ export default function BoxStudioPage() {
   const [used, setUsed] = useState("");
 
   useEffect(() => {
-    async function load() {
+    async function loadTeams() {
       const supabase = createClient();
-      const { data } = await supabase
-        .from("teams")
-        .select("name")
-        .order("name");
+      const { data } = await supabase.from("teams").select("name").order("name");
       setCfbTeams((data || []).map((t: { name: string }) => t.name));
     }
-    load();
+    loadTeams();
   }, []);
-
-  const teamList = sport === "NFL" ? NFL_TEAMS : cfbTeams;
 
   useEffect(() => {
     setAway("");
     setHome("");
     setBox(null);
+    setModelSpread("");
+    setModelTotal("");
+    setMarketSpread("");
+    setMarketTotal("");
+    setWeek("");
   }, [sport]);
 
+  useEffect(() => {
+    async function fillLines() {
+      if (sport !== "CFB" || !away || !home || away === home) return;
+
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("games")
+        .select(
+          `
+          week,
+          market_spread,
+          market_total,
+          away:away_team_id(name),
+          home:home_team_id(name),
+          projections(model_spread, model_total)
+        `
+        )
+        .eq("status", "scheduled");
+
+      const rows = data || [];
+      const match = rows.find((g: any) => {
+        const a = Array.isArray(g.away) ? g.away[0]?.name : g.away?.name;
+        const h = Array.isArray(g.home) ? g.home[0]?.name : g.home?.name;
+        return a === away && h === home;
+      });
+
+      if (!match) {
+        setModelSpread("");
+        setModelTotal("");
+        setMarketSpread("");
+        setMarketTotal("");
+        setWeek("");
+        return;
+      }
+
+      const proj = Array.isArray(match.projections)
+        ? match.projections[0]
+        : match.projections;
+
+      setWeek(match.week != null ? String(match.week) : "");
+      setMarketSpread(
+        match.market_spread != null ? String(match.market_spread) : ""
+      );
+      setMarketTotal(
+        match.market_total != null ? String(match.market_total) : ""
+      );
+      setModelSpread(
+        proj?.model_spread != null ? String(proj.model_spread) : ""
+      );
+      setModelTotal(proj?.model_total != null ? String(proj.model_total) : "");
+    }
+
+    fillLines();
+  }, [sport, away, home]);
+
+  const teamList = sport === "NFL" ? NFL_TEAMS : cfbTeams;
   const canRun = useMemo(() => away && home && away !== home, [away, home]);
 
   async function generate() {
@@ -212,8 +268,8 @@ export default function BoxStudioPage() {
           <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
             {!box && (
               <p className="text-zinc-500 text-sm">
-                Choose away and home from the lists, then paste source
-                material.
+                Choose away and home. CFB lines fill from the model when that
+                game is on the board.
               </p>
             )}
             {box && (
