@@ -33,67 +33,6 @@ export async function POST(req: NextRequest) {
   let box: BoxScore | null = null;
   let used = "heuristic";
 
-  const key = process.env.XAI_API_KEY;
-  if (key && (previews || depth)) {
-    try {
-      const prompt = `You project a ${sport} box score.
-Rules:
-- Use CURRENT rosters from the depth chart / previews. Do not use transferred or graduated players.
-- Practical football scores (3s and 7s). No 34.5-30.9.
-- Do not pick a huge underdog to win unless the model spread is under 7.
-- Model home spread: ${modelSpread} (negative = home favored). Model total: ${modelTotal}.
-- Market spread: ${marketSpread}. Market total: ${marketTotal}.
-- Week 1 / early season: slightly suppress totals vs market.
-Return ONLY JSON:
-{"awayScore":n,"homeScore":n,"passing":[{"name","team","cmp","att","yds","td","int"}],"rushing":[{"name","team","att","yds","td"}],"receiving":[{"name","team","rec","yds","td"}],"lean":"string"}
-Away: ${away}
-Home: ${home}
-DEPTH CHART:
-${depth}
-PREVIEWS:
-${previews.slice(0, 24000)}`;
-
-      const r = await fetch("https://api.x.ai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${key}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "grok-4.3",
-          temperature: 0.4,
-          messages: [
-            {
-              role: "system",
-              content:
-                "You are Twin Parlay box-score projector. JSON only. Current rosters only.",
-            },
-            { role: "user", content: prompt },
-          ],
-        }),
-      });
-      const j = await r.json();
-      const text = j?.choices?.[0]?.message?.content || "";
-      const match = text.match(/\{[\s\S]*\}/);
-      if (match) {
-        const parsed = JSON.parse(match[0]);
-        box = {
-          away,
-          home,
-          awayScore: parsed.awayScore,
-          homeScore: parsed.homeScore,
-          passing: parsed.passing || [],
-          rushing: parsed.rushing || [],
-          receiving: parsed.receiving || [],
-          lean: parsed.lean || "",
-        };
-        used = "llm";
-      }
-    } catch {
-      box = null;
-    }
-  }
-
   if (!box) {
     const parsed = extractRoster(`${depth}\n${previews}`);
     box = heuristicBox({
@@ -109,3 +48,31 @@ ${previews.slice(0, 24000)}`;
       homeRBs: body.homeRBs || parsed.rbs,
       awayRBs: body.awayRBs || parsed.rbs,
       homeWRs: body.homeWRs || parsed.wrs,
+      awayWRs: body.awayWRs || parsed.wrs,
+    });
+    used = "heuristic";
+  }
+
+  const supabase = createClient();
+  await supabase.from("box_projections").insert({
+    sport,
+    week: body.week || null,
+    away,
+    home,
+    venue: body.venue || null,
+    market_spread: marketSpread,
+    market_total: marketTotal,
+    model_spread: modelSpread,
+    model_total: modelTotal,
+    pred_away_score: box.awayScore,
+    pred_home_score: box.homeScore,
+    box,
+    sources: [previews, depth]
+      .filter(Boolean)
+      .join("\n\n---\n\n")
+      .slice(0, 8000),
+    notes: used,
+  });
+
+  return NextResponse.json({ used, box });
+}
