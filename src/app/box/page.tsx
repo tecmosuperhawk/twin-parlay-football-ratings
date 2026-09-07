@@ -13,12 +13,6 @@ export default function BoxStudioPage() {
   const [modelTotal, setModelTotal] = useState("48");
   const [marketSpread, setMarketSpread] = useState("");
   const [marketTotal, setMarketTotal] = useState("");
-  const [awayQB, setAwayQB] = useState("");
-  const [homeQB, setHomeQB] = useState("");
-  const [awayRBs, setAwayRBs] = useState("");
-  const [homeRBs, setHomeRBs] = useState("");
-  const [awayWRs, setAwayWRs] = useState("");
-  const [homeWRs, setHomeWRs] = useState("");
   const [depth, setDepth] = useState("");
   const [previews, setPreviews] = useState("");
   const [loading, setLoading] = useState(false);
@@ -45,12 +39,6 @@ export default function BoxStudioPage() {
           modelTotal,
           marketSpread,
           marketTotal,
-          awayQB,
-          homeQB,
-          awayRBs,
-          homeRBs,
-          awayWRs,
-          homeWRs,
           depth,
           previews,
         }),
@@ -74,8 +62,8 @@ export default function BoxStudioPage() {
         </a>
         <h1 className="text-3xl font-bold mt-4">Box Score Studio</h1>
         <p className="text-zinc-400 mt-2">
-          Paste previews and depth charts. We blend those with the model line
-          into a practical projected box.
+          Paste depth charts and previews. Names are pulled from that text and
+          combined with the model line.
         </p>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
@@ -84,6 +72,7 @@ export default function BoxStudioPage() {
               {(["CFB", "NFL"] as const).map((s) => (
                 <button
                   key={s}
+                  type="button"
                   onClick={() => setSport(s)}
                   className={`px-3 py-1.5 rounded-lg text-sm border ${
                     sport === s
@@ -123,42 +112,20 @@ export default function BoxStudioPage() {
               />
             </div>
 
-            <Field label="Away QB" value={awayQB} onChange={setAwayQB} />
-            <Field label="Home QB" value={homeQB} onChange={setHomeQB} />
-            <Field
-              label="Away RBs (comma list)"
-              value={awayRBs}
-              onChange={setAwayRBs}
-            />
-            <Field
-              label="Home RBs (comma list)"
-              value={homeRBs}
-              onChange={setHomeRBs}
-            />
-            <Field
-              label="Away WRs/TEs"
-              value={awayWRs}
-              onChange={setAwayWRs}
-            />
-            <Field
-              label="Home WRs/TEs"
-              value={homeWRs}
-              onChange={setHomeWRs}
-            />
-
             <label className="block text-sm text-zinc-400">
               Depth chart
               <textarea
-                className="mt-1 w-full h-28 rounded-lg bg-zinc-900 border border-zinc-800 p-3 text-sm"
+                className="mt-1 w-full h-32 rounded-lg bg-zinc-900 border border-zinc-800 p-3 text-sm text-white"
                 value={depth}
                 onChange={(e) => setDepth(e.target.value)}
-                placeholder="Paste two-deep or Ourlads / official chart"
+                placeholder="Paste two-deeps. Away team first, then HOME, then home team."
               />
             </label>
+
             <label className="block text-sm text-zinc-400">
               Previews (one or more)
               <textarea
-                className="mt-1 w-full h-40 rounded-lg bg-zinc-900 border border-zinc-800 p-3 text-sm"
+                className="mt-1 w-full h-40 rounded-lg bg-zinc-900 border border-zinc-800 p-3 text-sm text-white"
                 value={previews}
                 onChange={(e) => setPreviews(e.target.value)}
                 placeholder="Paste Covers, Action, Rotowire, CBS, etc."
@@ -166,6 +133,7 @@ export default function BoxStudioPage() {
             </label>
 
             <button
+              type="button"
               disabled={!canRun || loading}
               onClick={generate}
               className="w-full rounded-lg bg-amber-500 text-black font-semibold py-2.5 disabled:opacity-40"
@@ -178,14 +146,14 @@ export default function BoxStudioPage() {
           <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
             {!box && (
               <p className="text-zinc-500 text-sm">
-                Fill the matchup and paste source material. Starter names help
-                even without an API key.
+                Enter the matchup and paste source material. No need to type
+                individual player names.
               </p>
             )}
             {box && (
               <div>
                 <p className="text-xs uppercase tracking-widest text-amber-400">
-                  Twin Parlay • {sport} {used}
+                  Twin Parlay • {sport} • {used}
                 </p>
                 <h2 className="text-4xl font-bold mt-2">
                   {box.home} {box.homeScore}
@@ -244,13 +212,12 @@ function Section({
         {rows.map((r, i) => (
           <div
             key={`${r.name}-${i}`}
-            className="flex justify-between border-b border-zinc-800 py-1"
+            className="flex justify-between gap-4 border-b border-zinc-800 py-1"
           >
             <span>
-              {r.name}{" "}
-              <span className="text-zinc-500">({r.team})</span>
+              {r.name} <span className="text-zinc-500">({r.team})</span>
             </span>
-            <span className="text-zinc-300">
+            <span className="text-zinc-300 shrink-0">
               {kind === "pass" &&
                 `${r.cmp}-${r.att}, ${r.yds} yds, ${r.td} TD, ${r.int} INT`}
               {kind === "rush" && `${r.att} att, ${r.yds} yds, ${r.td} TD`}

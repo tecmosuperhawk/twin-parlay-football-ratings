@@ -88,8 +88,9 @@ ${previews.slice(0, 24000)}`;
       box = null;
     }
   }
-
+import { extractRoster, heuristicBox, type BoxScore, type Sport } from "@/lib/boxScore";
   if (!box) {
+    const parsed = extractRoster(`${depth}\n${previews}`);
     box = heuristicBox({
       sport,
       away,
@@ -98,12 +99,12 @@ ${previews.slice(0, 24000)}`;
       modelTotal,
       marketSpread,
       marketTotal,
-      homeQB: body.homeQB || "",
-      awayQB: body.awayQB || "",
-      homeRBs: body.homeRBs || "",
-      awayRBs: body.awayRBs || "",
-      homeWRs: body.homeWRs || "",
-      awayWRs: body.awayWRs || "",
+      homeQB: body.homeQB || parsed.qb,
+      awayQB: body.awayQB || parsed.qb,
+      homeRBs: body.homeRBs || parsed.rbs,
+      awayRBs: body.awayRBs || parsed.rbs,
+      homeWRs: body.homeWRs || parsed.wrs,
+      awayWRs: body.awayWRs || parsed.wrs,
     });
     used = "heuristic";
   }

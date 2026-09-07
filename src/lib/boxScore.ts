@@ -40,7 +40,6 @@ function snap(x: number) {
 }
 
 function splitScores(total: number, homeSpread: number) {
-  // homeSpread < 0 means home favored
   const margin = Math.max(3, Math.abs(homeSpread));
   let home = (total + (homeSpread < 0 ? margin : -margin)) / 2;
   let away = total - home;
@@ -51,18 +50,55 @@ function splitScores(total: number, homeSpread: number) {
   return { awayScore: as, homeScore: hs };
 }
 
-function parseList(s: string) {
+function cleanName(s: string) {
   return s
-    .split(/[,|\n]/)
-    .map((x) => x.trim())
-    .filter(Boolean);
+    .replace(/\([^)]*\)/g, "")
+    .replace(/\b(jr|sr|iii|ii|iv)\.?$/i, (m) => m)
+    .replace(/^[\d.#\-\s]+/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function grabAfter(label: RegExp, text: string, max = 5) {
+  const lines = text.split(/\n/);
+  const out: string[] = [];
+  for (const line of lines) {
+    if (!label.test(line)) continue;
+    const rest = line.replace(label, " ");
+    rest
+      .split(/[,|/]| or /i)
+      .map(cleanName)
+      .filter((n) => n.split(" ").length >= 2 && n.length < 40)
+      .forEach((n) => {
+        if (!out.includes(n) && out.length < max) out.push(n);
+      });
+  }
+  return out;
+}
+
+export function extractRoster(text: string) {
+  const t = text || "";
+  const qbs = [
+    ...grabAfter(/\b(qb|quarterback)\b[:\s-]+/i, t, 3),
+    ...grabAfter(/\bstarter\b[:\s-]+/i, t, 2),
+  ];
+  const rbs = grabAfter(/\b(rb|running back|hb|tb)\b[:\s-]+/i, t, 4);
+  const wrs = [
+    ...grabAfter(/\b(wr|wide receiver|x|z|slot|sl)\b[:\s-]+/i, t, 6),
+    ...grabAfter(/\b(te|tight end)\b[:\s-]+/i, t, 3),
+  ];
+  return {
+    qb: qbs[0] || "",
+    rbs: rbs.join(", "),
+    wrs: wrs.join(", "),
+  };
 }
 
 export function heuristicBox(input: {
   sport: Sport;
   away: string;
   home: string;
-  modelSpread: number; // home perspective
+  modelSpread: number;
   modelTotal: number;
   marketSpread?: number | null;
   marketTotal?: number | null;
@@ -77,46 +113,46 @@ export function heuristicBox(input: {
     input.modelTotal,
     input.modelSpread
   );
-
   const homeFav = input.modelSpread < 0;
-  const homePassShare = homeFav ? 0.56 : 0.44;
   const passShareOfTotal = input.sport === "NFL" ? 0.62 : 0.58;
   const totalOffYds = input.modelTotal * 14.2;
   const homeYds = totalOffYds * (homeFav ? 0.58 : 0.42);
   const awayYds = totalOffYds - homeYds;
-
   const homePass = Math.round(homeYds * passShareOfTotal);
   const awayPass = Math.round(awayYds * passShareOfTotal);
   const homeRush = Math.round(homeYds - homePass);
   const awayRush = Math.round(awayYds - awayPass);
 
+  const parseList = (s: string) =>
+    s
+      .split(/[,|\n]/)
+      .map((x) => x.trim())
+      .filter(Boolean);
+
   const hRBs = parseList(input.homeRBs);
   const aRBs = parseList(input.awayRBs);
   const hWRs = parseList(input.homeWRs);
   const aWRs = parseList(input.awayWRs);
-
   const rushSplit = [0.52, 0.28, 0.2];
   const recSplit = [0.32, 0.24, 0.18, 0.14, 0.12];
 
   const rushing: PlayerLine[] = [];
-  hRBs.forEach((n, i) => {
-    if (i > 2) return;
+  hRBs.slice(0, 3).forEach((n, i) => {
     rushing.push({
       name: n,
       team: input.home,
       att: Math.round((homeFav ? 28 : 22) * rushSplit[i]),
       yds: Math.round(homeRush * rushSplit[i]),
-      td: i === 0 ? (homeScore >= 24 ? 1 : 0) : 0,
+      td: i === 0 && homeScore >= 24 ? 1 : 0,
     });
   });
-  aRBs.forEach((n, i) => {
-    if (i > 2) return;
+  aRBs.slice(0, 3).forEach((n, i) => {
     rushing.push({
       name: n,
       team: input.away,
       att: Math.round((homeFav ? 20 : 26) * rushSplit[i]),
       yds: Math.round(awayRush * rushSplit[i]),
-      td: i === 0 ? (awayScore >= 21 ? 1 : 0) : 0,
+      td: i === 0 && awayScore >= 21 ? 1 : 0,
     });
   });
 
@@ -145,22 +181,20 @@ export function heuristicBox(input: {
   ];
 
   const receiving: PlayerLine[] = [];
-  hWRs.forEach((n, i) => {
-    if (i > 4) return;
+  hWRs.slice(0, 5).forEach((n, i) => {
     receiving.push({
       name: n,
       team: input.home,
-      rec: Math.max(2, Math.round(6 - i)),
+      rec: Math.max(2, 6 - i),
       yds: Math.round(homePass * recSplit[i]),
       td: i === 0 ? 1 : i === 1 && homePassTd > 1 ? 1 : 0,
     });
   });
-  aWRs.forEach((n, i) => {
-    if (i > 4) return;
+  aWRs.slice(0, 5).forEach((n, i) => {
     receiving.push({
       name: n,
       team: input.away,
-      rec: Math.max(2, Math.round(5 - i)),
+      rec: Math.max(2, 5 - i),
       yds: Math.round(awayPass * recSplit[i]),
       td: i === 0 && awayPassTd > 0 ? 1 : 0,
     });
