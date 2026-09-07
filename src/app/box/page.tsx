@@ -1,10 +1,47 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createClient } from "@/lib/supabase";
 import type { BoxScore } from "@/lib/boxScore";
+
+const NFL_TEAMS = [
+  "Arizona Cardinals",
+  "Atlanta Falcons",
+  "Baltimore Ravens",
+  "Buffalo Bills",
+  "Carolina Panthers",
+  "Chicago Bears",
+  "Cincinnati Bengals",
+  "Cleveland Browns",
+  "Dallas Cowboys",
+  "Denver Broncos",
+  "Detroit Lions",
+  "Green Bay Packers",
+  "Houston Texans",
+  "Indianapolis Colts",
+  "Jacksonville Jaguars",
+  "Kansas City Chiefs",
+  "Las Vegas Raiders",
+  "Los Angeles Chargers",
+  "Los Angeles Rams",
+  "Miami Dolphins",
+  "Minnesota Vikings",
+  "New England Patriots",
+  "New Orleans Saints",
+  "New York Giants",
+  "New York Jets",
+  "Philadelphia Eagles",
+  "Pittsburgh Steelers",
+  "San Francisco 49ers",
+  "Seattle Seahawks",
+  "Tampa Bay Buccaneers",
+  "Tennessee Titans",
+  "Washington Commanders",
+];
 
 export default function BoxStudioPage() {
   const [sport, setSport] = useState<"CFB" | "NFL">("CFB");
+  const [cfbTeams, setCfbTeams] = useState<string[]>([]);
   const [away, setAway] = useState("");
   const [home, setHome] = useState("");
   const [venue, setVenue] = useState("");
@@ -20,7 +57,27 @@ export default function BoxStudioPage() {
   const [box, setBox] = useState<BoxScore | null>(null);
   const [used, setUsed] = useState("");
 
-  const canRun = useMemo(() => away && home, [away, home]);
+  useEffect(() => {
+    async function load() {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("teams")
+        .select("name")
+        .order("name");
+      setCfbTeams((data || []).map((t: { name: string }) => t.name));
+    }
+    load();
+  }, []);
+
+  const teamList = sport === "NFL" ? NFL_TEAMS : cfbTeams;
+
+  useEffect(() => {
+    setAway("");
+    setHome("");
+    setBox(null);
+  }, [sport]);
+
+  const canRun = useMemo(() => away && home && away !== home, [away, home]);
 
   async function generate() {
     setLoading(true);
@@ -62,8 +119,7 @@ export default function BoxStudioPage() {
         </a>
         <h1 className="text-3xl font-bold mt-4">Box Score Studio</h1>
         <p className="text-zinc-400 mt-2">
-          Paste depth charts and previews. Names are pulled from that text and
-          combined with the model line.
+          Pick the teams, paste depth charts and previews, generate the box.
         </p>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
@@ -86,8 +142,18 @@ export default function BoxStudioPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Away" value={away} onChange={setAway} />
-              <Field label="Home" value={home} onChange={setHome} />
+              <Select
+                label="Away"
+                value={away}
+                onChange={setAway}
+                options={teamList}
+              />
+              <Select
+                label="Home"
+                value={home}
+                onChange={setHome}
+                options={teamList}
+              />
               <Field label="Venue" value={venue} onChange={setVenue} />
               <Field label="Week" value={week} onChange={setWeek} />
               <Field
@@ -118,7 +184,7 @@ export default function BoxStudioPage() {
                 className="mt-1 w-full h-32 rounded-lg bg-zinc-900 border border-zinc-800 p-3 text-sm text-white"
                 value={depth}
                 onChange={(e) => setDepth(e.target.value)}
-                placeholder="Paste two-deeps. Away team first, then HOME, then home team."
+                placeholder="Paste two-deeps. Away first, then HOME, then home team."
               />
             </label>
 
@@ -146,8 +212,8 @@ export default function BoxStudioPage() {
           <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
             {!box && (
               <p className="text-zinc-500 text-sm">
-                Enter the matchup and paste source material. No need to type
-                individual player names.
+                Choose away and home from the lists, then paste source
+                material.
               </p>
             )}
             {box && (
@@ -162,7 +228,6 @@ export default function BoxStudioPage() {
                   {box.away} {box.awayScore}
                 </h3>
                 <p className="text-sm text-zinc-500 mt-2">{box.lean}</p>
-
                 <Section title="Passing" rows={box.passing} kind="pass" />
                 <Section title="Rushing" rows={box.rushing} kind="rush" />
                 <Section title="Receiving" rows={box.receiving} kind="rec" />
@@ -192,6 +257,36 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
+    </label>
+  );
+}
+
+function Select({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+}) {
+  return (
+    <label className="block text-sm text-zinc-400">
+      {label}
+      <select
+        className="mt-1 w-full rounded-lg bg-zinc-900 border border-zinc-800 px-3 py-2 text-sm text-white"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">Select team</option>
+        {options.map((name) => (
+          <option key={name} value={name}>
+            {name}
+          </option>
+        ))}
+      </select>
     </label>
   );
 }
