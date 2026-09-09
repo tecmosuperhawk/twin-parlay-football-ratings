@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase";
 type GameRow = {
   id: string;
   week: string;
+  kickoff: string | null;
   away: string;
   home: string;
   away_conf: string | null;
@@ -22,13 +23,15 @@ type GameRow = {
 };
 
 type SortKey =
+  | "kickoff"
   | "default"
   | "ats"
-  | "total"
+  | "totals"
   | "favs"
   | "dogs"
   | "overs"
-  | "unders";
+  | "unders"
+  | "total";
 
 const CONFERENCES = [
   "All",
@@ -212,14 +215,16 @@ export default function ProjectionsPage() {
   const [games, setGames] = useState<GameRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [confFilter, setConfFilter] = useState("All");
-  const [sortKey, setSortKey] = useState<SortKey>("default");
+    const [sortKey, setSortKey] = useState<SortKey>("kickoff");
 
   const showAts =
+    sortKey === "kickoff" ||
     sortKey === "default" ||
     sortKey === "ats" ||
     sortKey === "favs" ||
     sortKey === "dogs";
   const showTotals =
+    sortKey === "kickoff" ||
     sortKey === "default" ||
     sortKey === "ats" ||
     sortKey === "total" ||
@@ -235,32 +240,30 @@ export default function ProjectionsPage() {
         .from("games")
         .select(
           `
-          id, week, neutral, market_spread, market_total,
+          id, week, kickoff, neutral, market_spread, market_total,
           away:away_team_id(name, conference),
           home:home_team_id(name, conference),
           projections(model_spread, spread_edge, spread_lean, model_total, total_edge, total_lean)
         `
         )
         .eq("status", "scheduled")
-        .order("week");
+        .order("kickoff", { ascending: true, nullsFirst: false });
 
-      if (!data) {
-        setLoading(false);
-        return;
-      }
-
-      const rows: GameRow[] = data.map((g: any) => {
+      const rows = (data || []).map((g: any) => {
+        const away = Array.isArray(g.away) ? g.away[0] : g.away;
+        const home = Array.isArray(g.home) ? g.home[0] : g.home;
         const proj = Array.isArray(g.projections)
           ? g.projections[0]
           : g.projections;
         return {
           id: g.id,
           week: g.week,
-          away: g.away?.name ?? "?",
-          home: g.home?.name ?? "?",
-          away_conf: g.away?.conference ?? null,
-          home_conf: g.home?.conference ?? null,
-          neutral: g.neutral,
+          kickoff: g.kickoff ?? null,
+          away: away?.name ?? "",
+          home: home?.name ?? "",
+          away_conf: away?.conference ?? null,
+          home_conf: home?.conference ?? null,
+          neutral: !!g.neutral,
           market_spread: g.market_spread,
           market_total: g.market_total,
           model_spread: proj?.model_spread ?? null,
@@ -294,7 +297,13 @@ export default function ProjectionsPage() {
 
     const abs = (n: number | null) => Math.abs(n ?? 0);
     list = [...list];
-    if (sortKey === "total" || sortKey === "overs" || sortKey === "unders") {
+    if (sortKey === "kickoff") {
+      list.sort((a, b) => {
+        const ta = a.kickoff ? new Date(a.kickoff).getTime() : 9e15;
+        const tb = b.kickoff ? new Date(b.kickoff).getTime() : 9e15;
+        return ta - tb;
+      });
+    } else if (sortKey === "total" || sortKey === "overs" || sortKey === "unders") {
       list.sort((a, b) => abs(b.total_edge) - abs(a.total_edge));
     } else {
       list.sort((a, b) => abs(b.spread_edge) - abs(a.spread_edge));
@@ -316,7 +325,7 @@ export default function ProjectionsPage() {
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-3 mb-6 items-center">
+                <div className="flex flex-wrap gap-3 mb-6 items-center">
           <label className="text-sm text-zinc-400">Conference</label>
           <select
             value={confFilter}
@@ -330,34 +339,95 @@ export default function ProjectionsPage() {
             ))}
           </select>
 
-          <button onClick={() => setSortKey("ats")} className={sortBtn(sortKey === "ats")}>
+          <button
+            type="button"
+            onClick={() => setSortKey("kickoff")}
+            className={`px-3 py-1.5 rounded-lg text-sm border ${
+              sortKey === "kickoff"
+                ? "border-amber-400 text-amber-300"
+                : "border-zinc-700 text-zinc-400"
+            }`}
+          >
+            By kickoff
+          </button>
+          <button
+            type="button"
+            onClick={() => setSortKey("ats")}
+            className={`px-3 py-1.5 rounded-lg text-sm border ${
+              sortKey === "ats"
+                ? "border-amber-400 text-amber-300"
+                : "border-zinc-700 text-zinc-400"
+            }`}
+          >
             Biggest ATS Edge
           </button>
-          <button onClick={() => setSortKey("favs")} className={sortBtn(sortKey === "favs")}>
+          <button
+            type="button"
+            onClick={() => setSortKey("favs")}
+            className={`px-3 py-1.5 rounded-lg text-sm border ${
+              sortKey === "favs"
+                ? "border-amber-400 text-amber-300"
+                : "border-zinc-700 text-zinc-400"
+            }`}
+          >
             Favorites
           </button>
-          <button onClick={() => setSortKey("dogs")} className={sortBtn(sortKey === "dogs")}>
+          <button
+            type="button"
+            onClick={() => setSortKey("dogs")}
+            className={`px-3 py-1.5 rounded-lg text-sm border ${
+              sortKey === "dogs"
+                ? "border-amber-400 text-amber-300"
+                : "border-zinc-700 text-zinc-400"
+            }`}
+          >
             Underdogs
           </button>
-          <button onClick={() => setSortKey("total")} className={sortBtn(sortKey === "total")}>
+          <button
+            type="button"
+            onClick={() => setSortKey("total")}
+            className={`px-3 py-1.5 rounded-lg text-sm border ${
+              sortKey === "total"
+                ? "border-amber-400 text-amber-300"
+                : "border-zinc-700 text-zinc-400"
+            }`}
+          >
             Biggest Totals Edge
           </button>
-          <button onClick={() => setSortKey("overs")} className={sortBtn(sortKey === "overs")}>
+          <button
+            type="button"
+            onClick={() => setSortKey("overs")}
+            className={`px-3 py-1.5 rounded-lg text-sm border ${
+              sortKey === "overs"
+                ? "border-amber-400 text-amber-300"
+                : "border-zinc-700 text-zinc-400"
+            }`}
+          >
             Overs
           </button>
-          <button onClick={() => setSortKey("unders")} className={sortBtn(sortKey === "unders")}>
+          <button
+            type="button"
+            onClick={() => setSortKey("unders")}
+            className={`px-3 py-1.5 rounded-lg text-sm border ${
+              sortKey === "unders"
+                ? "border-amber-400 text-amber-300"
+                : "border-zinc-700 text-zinc-400"
+            }`}
+          >
             Unders
           </button>
           <button
+            type="button"
             onClick={() => setSortKey("default")}
-            className="px-3 py-2 rounded-lg text-sm border border-zinc-700 text-zinc-400 hover:border-zinc-500"
+            className={`px-3 py-1.5 rounded-lg text-sm border ${
+              sortKey === "default"
+                ? "border-amber-400 text-amber-300"
+                : "border-zinc-700 text-zinc-400"
+            }`}
           >
             Default
           </button>
-
-          <span className="text-sm text-zinc-500 ml-2">
-            {filtered.length} games
-          </span>
+          <span className="text-sm text-zinc-500">{filtered.length} games</span>
         </div>
 
         {loading ? (
@@ -369,6 +439,7 @@ export default function ProjectionsPage() {
                 <thead className="bg-zinc-900 text-zinc-400">
                   <tr>
                     <th className="text-left px-3 py-3">Matchup</th>
+                                  <th className="px-3 py-2 text-left">Kickoff</th>
                     <th className="text-left px-3 py-3">Week</th>
                     <th className="text-left px-3 py-3">Practical Prediction</th>
                     {showAts && !totOnly && (
@@ -418,6 +489,17 @@ export default function ProjectionsPage() {
                             ({g.home_conf ?? "?"})
                           </span>
                         </td>
+                                              <td className="px-3 py-2.5 text-zinc-400 whitespace-nowrap text-sm">
+                        {g.kickoff
+                          ? new Date(g.kickoff).toLocaleString("en-US", {
+                              weekday: "short",
+                              month: "short",
+                              day: "numeric",
+                              hour: "numeric",
+                              minute: "2-digit",
+                            })
+                          : "—"}
+                      </td>
                         <td className="px-3 py-2.5 text-zinc-400">{g.week}</td>
                         <td className="px-3 py-2.5 font-medium text-amber-300 whitespace-nowrap">
                           {pred}
