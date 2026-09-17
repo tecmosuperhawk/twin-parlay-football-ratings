@@ -65,7 +65,6 @@ export default function NflPropsPage() {
   const [week, setWeek] = useState(2);
   const [sortKey, setSortKey] = useState<SortKey>("pass_yds");
   const [sortAsc, setSortAsc] = useState(false);
-  const [week] = useState(1);
 
   useEffect(() => {
     async function load() {
