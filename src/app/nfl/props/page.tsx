@@ -60,8 +60,9 @@ function delta(our: number, fp: number | null) {
 export default function NflPropsPage() {
   const [data, setData] = useState<PropRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
   const [pos, setPos] = useState<PosFilter>("ALL");
+  const [week, setWeek] = useState(2);
   const [sortKey, setSortKey] = useState<SortKey>("pass_yds");
   const [sortAsc, setSortAsc] = useState(false);
   const [week] = useState(1);
@@ -141,7 +142,7 @@ export default function NflPropsPage() {
       setLoading(false);
     }
     load();
-  }, [week]);
+  }, [week, sortKey]);
 
   const rows = useMemo(() => {
     let list = [...data];
@@ -251,6 +252,21 @@ export default function NflPropsPage() {
             Week {week} — Our model (Clay + matchup) vs FantasyPros. Opp rank 1 =
             toughest defense.
           </p>
+          <div className="flex gap-2 mb-4">
+  {[1, 2].map((w) => (
+    <button
+      key={w}
+      onClick={() => setWeek(w)}
+      className={`px-3 py-1.5 rounded-lg text-sm ${
+        week === w
+          ? "bg-white text-zinc-950"
+          : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+      }`}
+    >
+      Week {w}
+    </button>
+  ))}
+</div>
         </div>
 
         <div className="flex flex-wrap gap-2 mb-6 items-center">
