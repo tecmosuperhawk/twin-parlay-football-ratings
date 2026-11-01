@@ -74,7 +74,15 @@ export default function Home() {
               Clay 2026 def rank and points allowed per game.
             </p>
           </a>
-
+<a
+  href="/cbb"
+  className="block rounded-xl border border-zinc-800 bg-zinc-900 p-6 hover:border-zinc-600 transition"
+>
+  <h2 className="text-xl font-semibold mb-2">CBB Pick'em</h2>
+  <p className="text-zinc-400 text-sm">
+    Andy · Brett · Brayden — straight winner picks. Daily slate from ESPN.
+  </p>
+</a>
           <a
             href="/nfl/props"
             className="block rounded-xl border border-zinc-800 bg-zinc-900 p-6 hover:border-zinc-600 transition"
