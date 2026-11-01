@@ -86,39 +86,43 @@ export default function Standings() {
     const weekStart = new Date(now);
     weekStart.setDate(now.getDate() - now.getDay());
 
-    function calc(filterDate?: Date): Row[] {
-      const filteredGames = safeGames.filter((g) =>
-        filterDate ? new Date(g.game_date) >= filterDate : true
-      );
-      const gameMap = Object.fromEntries(
-        filteredGames.map((g) => [g.id, g.winner])
-      );
+function calc(filterDate?: Date): Row[] {
+  const cutoff = filterDate
+    ? filterDate.toISOString().slice(0, 10)
+    : null;
 
-      const stats: Record<string, { w: number; l: number }> = {
-        Andy: { w: 0, l: 0 },
-        Brett: { w: 0, l: 0 },
-        Brayden: { w: 0, l: 0 },
-      };
+  const filteredGames = safeGames.filter((g) =>
+    cutoff ? g.game_date >= cutoff : true
+  );
+  const gameMap = Object.fromEntries(
+    filteredGames.map((g) => [g.id, g.winner])
+  );
 
-      safePicks.forEach((p) => {
-        const winner = gameMap[p.game_id];
-        if (!winner) return;
-        if (p.pick === winner) stats[p.player].w++;
-        else stats[p.player].l++;
-      });
+  const stats: Record<string, { w: number; l: number }> = {
+    Andy: { w: 0, l: 0 },
+    Brett: { w: 0, l: 0 },
+    Brayden: { w: 0, l: 0 },
+  };
 
-      return Object.entries(stats)
-        .map(([player, s]) => ({
-          player,
-          wins: s.w,
-          losses: s.l,
-          pct:
-            s.w + s.l === 0
-              ? "—"
-              : ((s.w / (s.w + s.l)) * 100).toFixed(1) + "%",
-        }))
-        .sort((a, b) => b.wins - a.wins || a.losses - b.losses);
-    }
+  safePicks.forEach((p) => {
+    const winner = gameMap[p.game_id];
+    if (!winner) return;
+    if (p.pick === winner) stats[p.player].w++;
+    else stats[p.player].l++;
+  });
+
+  return Object.entries(stats)
+    .map(([player, s]) => ({
+      player,
+      wins: s.w,
+      losses: s.l,
+      pct:
+        s.w + s.l === 0
+          ? "—"
+          : ((s.w / (s.w + s.l)) * 100).toFixed(1) + "%",
+    }))
+    .sort((a, b) => b.wins - a.wins || a.losses - b.losses);
+}
 
     setOverall(calc());
     setMonth(calc(monthStart));
