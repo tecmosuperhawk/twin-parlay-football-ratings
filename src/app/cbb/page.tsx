@@ -6,6 +6,12 @@ import { createClient } from "@/lib/supabase";
 const PLAYERS = ["Andy", "Brett", "Brayden"] as const;
 type Player = (typeof PLAYERS)[number];
 
+const PINS: Record<Player, string> = {
+  Andy: "3747",
+  Brett: "2380",
+  Brayden: "6910",
+};
+
 type Game = {
   id: string;
   tipoff: string;
@@ -28,6 +34,8 @@ export default function CbbPickem() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [pinPrompt, setPinPrompt] = useState<{ target: Player; value: string } | null>(null);
+  const [pinError, setPinError] = useState("");
 
   async function load() {
     setLoading(true);
@@ -85,6 +93,23 @@ export default function CbbPickem() {
     load();
   }, [date, player]);
 
+  function trySwitch(target: Player) {
+    if (target === player) return;
+    setPinPrompt({ target, value: "" });
+    setPinError("");
+  }
+
+  function confirmPin() {
+    if (!pinPrompt) return;
+    if (pinPrompt.value === PINS[pinPrompt.target]) {
+      setPlayer(pinPrompt.target);
+      setPinPrompt(null);
+      setPinError("");
+    } else {
+      setPinError("Wrong PIN");
+    }
+  }
+
   function toggle(gameId: string, team: string) {
     setMyPicks((prev) => ({ ...prev, [gameId]: team }));
   }
@@ -141,7 +166,7 @@ export default function CbbPickem() {
               {PLAYERS.map((p) => (
                 <button
                   key={p}
-                  onClick={() => setPlayer(p)}
+                  onClick={() => trySwitch(p)}
                   className={`px-3 py-1.5 rounded text-sm ${
                     player === p
                       ? "bg-white text-zinc-950"
@@ -171,9 +196,34 @@ export default function CbbPickem() {
           </button>
         </div>
 
-        {message && (
-          <p className="text-sm mb-4 text-zinc-300">{message}</p>
+        {pinPrompt && (
+          <div className="mb-4 p-3 rounded-lg border border-zinc-700 bg-zinc-900 inline-block">
+            <div className="text-sm mb-2">PIN for {pinPrompt.target}</div>
+            <input
+              type="password"
+              inputMode="numeric"
+              maxLength={4}
+              value={pinPrompt.value}
+              onChange={(e) =>
+                setPinPrompt({ ...pinPrompt, value: e.target.value })
+              }
+              onKeyDown={(e) => e.key === "Enter" && confirmPin()}
+              className="bg-zinc-800 border border-zinc-700 rounded px-3 py-1.5 text-sm w-24"
+              autoFocus
+            />
+            <button
+              onClick={confirmPin}
+              className="ml-2 px-3 py-1.5 rounded bg-zinc-700 text-sm"
+            >
+              OK
+            </button>
+            {pinError && (
+              <span className="ml-3 text-xs text-red-400">{pinError}</span>
+            )}
+          </div>
         )}
+
+        {message && <p className="text-sm mb-4 text-zinc-300">{message}</p>}
         {loading && <p className="text-zinc-500">Loading…</p>}
 
         <div className="space-y-4">
@@ -232,17 +282,13 @@ export default function CbbPickem() {
                     </div>
                   )}
                   {locked && myPick && (
-                    <div className="text-sm text-emerald-400">
-                      You: {myPick}
-                    </div>
+                    <div className="text-sm text-emerald-400">You: {myPick}</div>
                   )}
                 </div>
 
                 {locked && others.length > 0 && (
                   <div className="text-xs text-zinc-400 mt-3 border-t border-zinc-800 pt-2">
-                    {others
-                      .map((p) => `${p.player}: ${p.pick}`)
-                      .join(" · ")}
+                    {others.map((p) => `${p.player}: ${p.pick}`).join(" · ")}
                   </div>
                 )}
                 {!locked && (
