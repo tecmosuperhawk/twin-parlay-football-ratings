@@ -62,8 +62,8 @@ export default function CbbPickem() {
 
     const ymd = date.replace(/-/g, "");
     const res = await fetch(
-      `https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=${ymd}`
-    );
+  `https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=${ymd}&groups=50`
+);
     const data = await res.json();
 
     const parsed: Game[] = (data.events || []).map((e: any) => {
