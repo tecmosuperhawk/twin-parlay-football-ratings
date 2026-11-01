@@ -14,6 +14,10 @@ type Game = {
   tv: string;
   spread: string;
   status: string;
+  awayScore: number | null;
+  homeScore: number | null;
+  clock: string;
+  period: number;
 };
 
 export default function GroupPicks() {
@@ -33,23 +37,30 @@ export default function GroupPicks() {
       );
       const data = await res.json();
 
-      const parsed: Game[] = (data.events || []).map((e: any) => {
-        const c = e.competitions[0];
-        const home = c.competitors.find((x: any) => x.homeAway === "home");
-        const away = c.competitors.find((x: any) => x.homeAway === "away");
-        return {
-          id: e.id,
-          tipoff: e.date,
-          away: away?.team.shortDisplayName || "?",
-          home: home?.team.shortDisplayName || "?",
-          awayRec: away?.records?.[0]?.summary || "0-0",
-          homeRec: home?.records?.[0]?.summary || "0-0",
-          venue: c.venue?.fullName || "—",
-          tv: c.broadcasts?.[0]?.names?.[0] || "—",
-          spread: c.odds?.[0]?.details || "—",
-          status: e.status?.type?.state || "pre",
-        };
-      });
+const parsed: Game[] = (data.events || []).map((e: any) => {
+  const c = e.competitions[0];
+  const home = c.competitors.find((x: any) => x.homeAway === "home");
+  const away = c.competitors.find((x: any) => x.homeAway === "away");
+  const state = e.status?.type?.state || "pre";
+  const awayScore = away?.score ? Number(away.score) : null;
+  const homeScore = home?.score ? Number(home.score) : null;
+  return {
+    id: e.id,
+    tipoff: e.date,
+    away: away?.team.shortDisplayName || "?",
+    home: home?.team.shortDisplayName || "?",
+    awayRec: away?.records?.[0]?.summary || "0-0",
+    homeRec: home?.records?.[0]?.summary || "0-0",
+    venue: c.venue?.fullName || "—",
+    tv: c.broadcasts?.[0]?.names?.[0] || "—",
+    spread: c.odds?.[0]?.details || "—",
+    status: state,
+    awayScore,
+    homeScore,
+    clock: e.status?.displayClock || "",
+    period: e.status?.period || 0,
+  };
+});
       setGames(parsed);
 
       if (parsed.length) {
