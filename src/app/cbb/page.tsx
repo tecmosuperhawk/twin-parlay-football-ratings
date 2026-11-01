@@ -40,7 +40,6 @@ export default function CbbPickem() {
   const [pinError, setPinError] = useState("");
   const [selectedName, setSelectedName] = useState<Player | null>(null);
 
-  // Restore session if still valid (< 1 hour)
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -62,8 +61,8 @@ export default function CbbPickem() {
 
     const ymd = date.replace(/-/g, "");
     const res = await fetch(
-  `https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=${ymd}&groups=50`
-);
+      `https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=${ymd}&groups=50`
+    );
     const data = await res.json();
 
     const parsed: Game[] = (data.events || []).map((e: any) => {
@@ -138,7 +137,6 @@ export default function CbbPickem() {
       setPlayer(selectedName);
       setPinError("");
       setSelectedName(null);
-      // Save session for 1 hour
       localStorage.setItem(
         STORAGE_KEY,
         JSON.stringify({
@@ -160,6 +158,43 @@ export default function CbbPickem() {
 
   function toggle(gameId: string, team: string) {
     setMyPicks((prev) => ({ ...prev, [gameId]: team }));
+  }
+
+  function getFavorite(g: Game): string | null {
+    if (!g.spread || g.spread === "—") return null;
+    const m = g.spread.match(/^([A-Z&]+)\s*-\d/);
+    if (!m) return null;
+    const abbr = m[1];
+    if (
+      g.home.toUpperCase().includes(abbr) ||
+      (abbr.length >= 3 && g.home.toUpperCase().startsWith(abbr.slice(0, 3)))
+    )
+      return g.home;
+    if (
+      g.away.toUpperCase().includes(abbr) ||
+      (abbr.length >= 3 && g.away.toUpperCase().startsWith(abbr.slice(0, 3)))
+    )
+      return g.away;
+    return g.home;
+  }
+
+  function applyPreset(kind: "home" | "away" | "fav" | "dog") {
+    const next: Record<string, string> = { ...myPicks };
+    const now = new Date();
+    games.forEach((g) => {
+      const tip = new Date(g.tipoff);
+      if (now >= tip || g.status !== "pre") return;
+      let pick: string | null = null;
+      if (kind === "home") pick = g.home;
+      if (kind === "away") pick = g.away;
+      if (kind === "fav") pick = getFavorite(g);
+      if (kind === "dog") {
+        const fav = getFavorite(g);
+        if (fav) pick = fav === g.home ? g.away : g.home;
+      }
+      if (pick) next[g.id] = pick;
+    });
+    setMyPicks(next);
   }
 
   async function submitAll() {
@@ -265,6 +300,12 @@ export default function CbbPickem() {
               Switch
             </button>
             <a
+              href="/cbb/picks"
+              className="text-sm px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700"
+            >
+              Group Picks
+            </a>
+            <a
               href="/cbb/standings"
               className="text-sm px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700"
             >
@@ -273,7 +314,7 @@ export default function CbbPickem() {
           </div>
         </div>
 
-        <div className="flex gap-4 mb-6 flex-wrap items-end">
+        <div className="flex gap-4 mb-4 flex-wrap items-end">
           <div>
             <label className="text-xs text-zinc-500">Date</label>
             <input
@@ -289,6 +330,33 @@ export default function CbbPickem() {
             className="px-4 py-2 rounded bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-sm font-medium"
           >
             {saving ? "Saving…" : "Submit Picks"}
+          </button>
+        </div>
+
+        <div className="flex gap-2 mb-4 flex-wrap">
+          <button
+            onClick={() => applyPreset("home")}
+            className="px-3 py-1.5 rounded bg-zinc-800 text-sm hover:bg-zinc-700"
+          >
+            All Home
+          </button>
+          <button
+            onClick={() => applyPreset("away")}
+            className="px-3 py-1.5 rounded bg-zinc-800 text-sm hover:bg-zinc-700"
+          >
+            All Away
+          </button>
+          <button
+            onClick={() => applyPreset("fav")}
+            className="px-3 py-1.5 rounded bg-zinc-800 text-sm hover:bg-zinc-700"
+          >
+            All Favorites
+          </button>
+          <button
+            onClick={() => applyPreset("dog")}
+            className="px-3 py-1.5 rounded bg-zinc-800 text-sm hover:bg-zinc-700"
+          >
+            All Underdogs
           </button>
         </div>
 
