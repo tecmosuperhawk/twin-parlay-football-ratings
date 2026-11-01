@@ -20,7 +20,6 @@ export default function Standings() {
     async function load() {
       const supabase = createClient();
 
-      // Pull all finished games + picks
       const { data: games } = await supabase
         .from("cbb_games")
         .select("id, game_date, winner")
@@ -28,10 +27,8 @@ export default function Standings() {
 
       const { data: picks } = await supabase.from("cbb_picks").select("*");
 
-      if (!games || !picks) {
-        setLoading(false);
-        return;
-      }
+      const safeGames = games ?? [];
+      const safePicks = picks ?? [];
 
       const now = new Date();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -39,7 +36,7 @@ export default function Standings() {
       weekStart.setDate(now.getDate() - now.getDay());
 
       function calc(filterDate?: Date): Row[] {
-        const filteredGames = games.filter((g) =>
+        const filteredGames = safeGames.filter((g) =>
           filterDate ? new Date(g.game_date) >= filterDate : true
         );
         const gameMap = Object.fromEntries(
@@ -52,7 +49,7 @@ export default function Standings() {
           Brayden: { w: 0, l: 0 },
         };
 
-        picks.forEach((p) => {
+        safePicks.forEach((p) => {
           const winner = gameMap[p.game_id];
           if (!winner) return;
           if (p.pick === winner) stats[p.player].w++;
