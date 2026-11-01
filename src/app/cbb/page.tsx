@@ -26,7 +26,7 @@ type Game = {
 };
 
 export default function CbbPickem() {
-  const [player, setPlayer] = useState<Player>("Andy");
+  const [player, setPlayer] = useState<Player | null>(null);
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [games, setGames] = useState<Game[]>([]);
   const [myPicks, setMyPicks] = useState<Record<string, string>>({});
@@ -34,10 +34,12 @@ export default function CbbPickem() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
-  const [pinPrompt, setPinPrompt] = useState<{ target: Player; value: string } | null>(null);
+  const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState("");
+  const [selectedName, setSelectedName] = useState<Player | null>(null);
 
   async function load() {
+    if (!player) return;
     setLoading(true);
     setMessage("");
     const supabase = createClient();
@@ -67,7 +69,23 @@ export default function CbbPickem() {
     });
     setGames(parsed);
 
+    // Upsert games so standings can use them later
     if (parsed.length) {
+      const gameRows = parsed.map((g) => ({
+        id: g.id,
+        game_date: date,
+        tipoff: g.tipoff,
+        away_name: g.away,
+        home_name: g.home,
+        away_record: g.awayRec,
+        home_record: g.homeRec,
+        venue: g.venue,
+        tv: g.tv,
+        spread: g.spread,
+        status: g.status,
+      }));
+      await supabase.from("cbb_games").upsert(gameRows, { onConflict: "id" });
+
       const { data: existing } = await supabase
         .from("cbb_picks")
         .select("*")
@@ -90,21 +108,21 @@ export default function CbbPickem() {
   }
 
   useEffect(() => {
-    load();
+    if (player) load();
   }, [date, player]);
 
-  function trySwitch(target: Player) {
-    if (target === player) return;
-    setPinPrompt({ target, value: "" });
+  function tryUnlock(name: Player) {
+    setSelectedName(name);
+    setPinInput("");
     setPinError("");
   }
 
   function confirmPin() {
-    if (!pinPrompt) return;
-    if (pinPrompt.value === PINS[pinPrompt.target]) {
-      setPlayer(pinPrompt.target);
-      setPinPrompt(null);
+    if (!selectedName) return;
+    if (pinInput === PINS[selectedName]) {
+      setPlayer(selectedName);
       setPinError("");
+      setSelectedName(null);
     } else {
       setPinError("Wrong PIN");
     }
@@ -115,7 +133,7 @@ export default function CbbPickem() {
   }
 
   async function submitAll() {
-    if (!Object.keys(myPicks).length) return;
+    if (!player || !Object.keys(myPicks).length) return;
     setSaving(true);
     setMessage("");
     const supabase = createClient();
@@ -141,6 +159,61 @@ export default function CbbPickem() {
 
   const now = new Date();
 
+  if (!player) {
+    return (
+      <main className="min-h-screen bg-zinc-950 text-white">
+        <div className="max-w-md mx-auto px-4 py-16">
+          <a href="/" className="text-zinc-400 text-sm hover:text-white">
+            ← Dashboard
+          </a>
+          <h1 className="text-3xl font-bold mt-4 mb-6">CBB Pick'em</h1>
+          <p className="text-zinc-400 text-sm mb-4">Select your name and enter your PIN</p>
+
+          <div className="flex gap-2 mb-4">
+            {PLAYERS.map((p) => (
+              <button
+                key={p}
+                onClick={() => tryUnlock(p)}
+                className={`px-4 py-2 rounded text-sm ${
+                  selectedName === p
+                    ? "bg-white text-zinc-950"
+                    : "bg-zinc-800 text-zinc-300"
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+
+          {selectedName && (
+            <div className="flex items-center gap-2">
+              <input
+                type="password"
+                inputMode="numeric"
+                maxLength={4}
+                placeholder="PIN"
+                value={pinInput}
+                onChange={(e) => setPinInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && confirmPin()}
+                className="bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-sm w-28"
+                autoFocus
+              />
+              <button
+                onClick={confirmPin}
+                className="px-4 py-2 rounded bg-emerald-600 text-sm"
+              >
+                OK
+              </button>
+              {pinError && (
+                <span className="text-xs text-red-400">{pinError}</span>
+              )}
+            </div>
+          )}
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-zinc-950 text-white">
       <div className="max-w-5xl mx-auto px-4 py-8">
@@ -150,34 +223,25 @@ export default function CbbPickem() {
               ← Dashboard
             </a>
             <h1 className="text-3xl font-bold mt-2">CBB Pick'em</h1>
+            <p className="text-zinc-400 text-sm">Signed in as {player}</p>
           </div>
-          <a
-            href="/cbb/standings"
-            className="text-sm px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700"
-          >
-            Standings
-          </a>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPlayer(null)}
+              className="text-sm px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700"
+            >
+              Switch
+            </button>
+            <a
+              href="/cbb/standings"
+              className="text-sm px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700"
+            >
+              Standings
+            </a>
+          </div>
         </div>
 
         <div className="flex gap-4 mb-6 flex-wrap items-end">
-          <div>
-            <label className="text-xs text-zinc-500">Who are you?</label>
-            <div className="flex gap-2 mt-1">
-              {PLAYERS.map((p) => (
-                <button
-                  key={p}
-                  onClick={() => trySwitch(p)}
-                  className={`px-3 py-1.5 rounded text-sm ${
-                    player === p
-                      ? "bg-white text-zinc-950"
-                      : "bg-zinc-800 text-zinc-300"
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-          </div>
           <div>
             <label className="text-xs text-zinc-500">Date</label>
             <input
@@ -195,33 +259,6 @@ export default function CbbPickem() {
             {saving ? "Saving…" : "Submit Picks"}
           </button>
         </div>
-
-        {pinPrompt && (
-          <div className="mb-4 p-3 rounded-lg border border-zinc-700 bg-zinc-900 inline-block">
-            <div className="text-sm mb-2">PIN for {pinPrompt.target}</div>
-            <input
-              type="password"
-              inputMode="numeric"
-              maxLength={4}
-              value={pinPrompt.value}
-              onChange={(e) =>
-                setPinPrompt({ ...pinPrompt, value: e.target.value })
-              }
-              onKeyDown={(e) => e.key === "Enter" && confirmPin()}
-              className="bg-zinc-800 border border-zinc-700 rounded px-3 py-1.5 text-sm w-24"
-              autoFocus
-            />
-            <button
-              onClick={confirmPin}
-              className="ml-2 px-3 py-1.5 rounded bg-zinc-700 text-sm"
-            >
-              OK
-            </button>
-            {pinError && (
-              <span className="ml-3 text-xs text-red-400">{pinError}</span>
-            )}
-          </div>
-        )}
 
         {message && <p className="text-sm mb-4 text-zinc-300">{message}</p>}
         {loading && <p className="text-zinc-500">Loading…</p>}
