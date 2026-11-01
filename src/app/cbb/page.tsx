@@ -12,6 +12,8 @@ const PINS: Record<Player, string> = {
   Brayden: "6910",
 };
 
+const STORAGE_KEY = "cbb_pin_session";
+
 type Game = {
   id: string;
   tipoff: string;
@@ -37,6 +39,20 @@ export default function CbbPickem() {
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState("");
   const [selectedName, setSelectedName] = useState<Player | null>(null);
+
+  // Restore session if still valid (< 1 hour)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const { player: saved, expires } = JSON.parse(raw);
+      if (saved && expires && Date.now() < expires) {
+        setPlayer(saved as Player);
+      } else {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    } catch {}
+  }, []);
 
   async function load() {
     if (!player) return;
@@ -69,7 +85,6 @@ export default function CbbPickem() {
     });
     setGames(parsed);
 
-    // Upsert games so standings can use them later
     if (parsed.length) {
       const gameRows = parsed.map((g) => ({
         id: g.id,
@@ -123,9 +138,24 @@ export default function CbbPickem() {
       setPlayer(selectedName);
       setPinError("");
       setSelectedName(null);
+      // Save session for 1 hour
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          player: selectedName,
+          expires: Date.now() + 60 * 60 * 1000,
+        })
+      );
     } else {
       setPinError("Wrong PIN");
     }
+  }
+
+  function logout() {
+    localStorage.removeItem(STORAGE_KEY);
+    setPlayer(null);
+    setMyPicks({});
+    setAllPicks([]);
   }
 
   function toggle(gameId: string, team: string) {
@@ -167,7 +197,9 @@ export default function CbbPickem() {
             ← Dashboard
           </a>
           <h1 className="text-3xl font-bold mt-4 mb-6">CBB Pick'em</h1>
-          <p className="text-zinc-400 text-sm mb-4">Select your name and enter your PIN</p>
+          <p className="text-zinc-400 text-sm mb-4">
+            Select your name and enter your PIN
+          </p>
 
           <div className="flex gap-2 mb-4">
             {PLAYERS.map((p) => (
@@ -227,7 +259,7 @@ export default function CbbPickem() {
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => setPlayer(null)}
+              onClick={logout}
               className="text-sm px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700"
             >
               Switch
@@ -324,7 +356,7 @@ export default function CbbPickem() {
                 </div>
 
                 {locked && others.length > 0 && (
-                  <div className="text-xs text-zinc-400 mt-3 border-t border-zinc-800 pt-2">
+                  <div className="text-xs text-zinc-300 mt-3 border-t border-zinc-800 pt-2">
                     {others.map((p) => `${p.player}: ${p.pick}`).join(" · ")}
                   </div>
                 )}
