@@ -20,8 +20,12 @@ type Game = {
   period: number;
 };
 
+function todayCT() {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
+}
+
 export default function GroupPicks() {
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(todayCT());
   const [games, setGames] = useState<Game[]>([]);
   const [picks, setPicks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,30 +41,28 @@ export default function GroupPicks() {
       );
       const data = await res.json();
 
-const parsed: Game[] = (data.events || []).map((e: any) => {
-  const c = e.competitions[0];
-  const home = c.competitors.find((x: any) => x.homeAway === "home");
-  const away = c.competitors.find((x: any) => x.homeAway === "away");
-  const state = e.status?.type?.state || "pre";
-  const awayScore = away?.score ? Number(away.score) : null;
-  const homeScore = home?.score ? Number(home.score) : null;
-  return {
-    id: e.id,
-    tipoff: e.date,
-    away: away?.team.shortDisplayName || "?",
-    home: home?.team.shortDisplayName || "?",
-    awayRec: away?.records?.[0]?.summary || "0-0",
-    homeRec: home?.records?.[0]?.summary || "0-0",
-    venue: c.venue?.fullName || "—",
-    tv: c.broadcasts?.[0]?.names?.[0] || "—",
-    spread: c.odds?.[0]?.details || "—",
-    status: state,
-    awayScore,
-    homeScore,
-    clock: e.status?.displayClock || "",
-    period: e.status?.period || 0,
-  };
-});
+      const parsed: Game[] = (data.events || []).map((e: any) => {
+        const c = e.competitions[0];
+        const home = c.competitors.find((x: any) => x.homeAway === "home");
+        const away = c.competitors.find((x: any) => x.homeAway === "away");
+        const state = e.status?.type?.state || "pre";
+        return {
+          id: e.id,
+          tipoff: e.date,
+          away: away?.team.shortDisplayName || "?",
+          home: home?.team.shortDisplayName || "?",
+          awayRec: away?.records?.[0]?.summary || "0-0",
+          homeRec: home?.records?.[0]?.summary || "0-0",
+          venue: c.venue?.fullName || "—",
+          tv: c.broadcasts?.[0]?.names?.[0] || "—",
+          spread: c.odds?.[0]?.details || "—",
+          status: state,
+          awayScore: away?.score ? Number(away.score) : null,
+          homeScore: home?.score ? Number(home.score) : null,
+          clock: e.status?.displayClock || "",
+          period: e.status?.period || 0,
+        };
+      });
       setGames(parsed);
 
       if (parsed.length) {
@@ -108,8 +110,8 @@ const parsed: Game[] = (data.events || []).map((e: any) => {
           </div>
         </div>
 
-        <div className="mb-6">
-          <label className="text-xs text-zinc-500">Date</label>
+        <div className="mb-2">
+          <label className="text-xs text-zinc-500">Date (Central)</label>
           <input
             type="date"
             value={date}
@@ -117,6 +119,10 @@ const parsed: Game[] = (data.events || []).map((e: any) => {
             className="block mt-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-1.5 text-sm"
           />
         </div>
+
+        <p className="text-sm text-zinc-400 mb-4">
+          {games.length} game{games.length === 1 ? "" : "s"}
+        </p>
 
         {loading && <p className="text-zinc-500">Loading…</p>}
 
@@ -135,16 +141,33 @@ const parsed: Game[] = (data.events || []).map((e: any) => {
                   {g.away} ({g.awayRec}) @ {g.home} ({g.homeRec})
                 </div>
                 <div className="text-xs text-zinc-400 mt-1">
-                  {tip.toLocaleString([], {
+                  {tip.toLocaleString("en-US", {
+                    timeZone: "America/Chicago",
                     weekday: "short",
                     month: "short",
                     day: "numeric",
                     hour: "numeric",
                     minute: "2-digit",
                   })}{" "}
-                  · {g.venue} · {g.tv}
+                  CT · {g.venue} · {g.tv}
                 </div>
                 <div className="text-xs text-zinc-500 mt-0.5">Line: {g.spread}</div>
+
+                {(g.status === "in" || g.status === "post") &&
+                  g.awayScore != null &&
+                  g.homeScore != null && (
+                    <div className="text-sm mt-1 font-medium">
+                      {g.away} {g.awayScore} – {g.home} {g.homeScore}
+                      {g.status === "in" && (
+                        <span className="text-xs text-zinc-400 ml-2">
+                          {g.period > 2 ? `OT${g.period - 2}` : `H${g.period}`} {g.clock}
+                        </span>
+                      )}
+                      {g.status === "post" && (
+                        <span className="text-xs text-zinc-500 ml-2">Final</span>
+                      )}
+                    </div>
+                  )}
 
                 {locked ? (
                   gamePicks.length > 0 ? (

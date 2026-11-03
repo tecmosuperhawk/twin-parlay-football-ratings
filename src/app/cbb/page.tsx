@@ -31,9 +31,13 @@ type Game = {
   period: number;
 };
 
+function todayCT() {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
+}
+
 export default function CbbPickem() {
   const [player, setPlayer] = useState<Player | null>(null);
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(todayCT());
   const [games, setGames] = useState<Game[]>([]);
   const [myPicks, setMyPicks] = useState<Record<string, string>>({});
   const [allPicks, setAllPicks] = useState<any[]>([]);
@@ -69,53 +73,51 @@ export default function CbbPickem() {
     );
     const data = await res.json();
 
-const parsed: Game[] = (data.events || []).map((e: any) => {
-  const c = e.competitions[0];
-  const home = c.competitors.find((x: any) => x.homeAway === "home");
-  const away = c.competitors.find((x: any) => x.homeAway === "away");
-  const state = e.status?.type?.state || "pre";
-  const awayScore = away?.score ? Number(away.score) : null;
-  const homeScore = home?.score ? Number(home.score) : null;
-  return {
-    id: e.id,
-    tipoff: e.date,
-    away: away?.team.shortDisplayName || "?",
-    home: home?.team.shortDisplayName || "?",
-    awayRec: away?.records?.[0]?.summary || "0-0",
-    homeRec: home?.records?.[0]?.summary || "0-0",
-    venue: c.venue?.fullName || "—",
-    tv: c.broadcasts?.[0]?.names?.[0] || "—",
-    spread: c.odds?.[0]?.details || "—",
-    status: state,
-    awayScore,
-    homeScore,
-    clock: e.status?.displayClock || "",
-    period: e.status?.period || 0,
-  };
-});
+    const parsed: Game[] = (data.events || []).map((e: any) => {
+      const c = e.competitions[0];
+      const home = c.competitors.find((x: any) => x.homeAway === "home");
+      const away = c.competitors.find((x: any) => x.homeAway === "away");
+      const state = e.status?.type?.state || "pre";
+      return {
+        id: e.id,
+        tipoff: e.date,
+        away: away?.team.shortDisplayName || "?",
+        home: home?.team.shortDisplayName || "?",
+        awayRec: away?.records?.[0]?.summary || "0-0",
+        homeRec: home?.records?.[0]?.summary || "0-0",
+        venue: c.venue?.fullName || "—",
+        tv: c.broadcasts?.[0]?.names?.[0] || "—",
+        spread: c.odds?.[0]?.details || "—",
+        status: state,
+        awayScore: away?.score ? Number(away.score) : null,
+        homeScore: home?.score ? Number(home.score) : null,
+        clock: e.status?.displayClock || "",
+        period: e.status?.period || 0,
+      };
+    });
     setGames(parsed);
 
     if (parsed.length) {
-        const gameRows = parsed.map((g) => {
+      const gameRows = parsed.map((g) => {
         let winner: string | null = null;
         if (g.status === "post" && g.awayScore != null && g.homeScore != null) {
-            winner = g.awayScore > g.homeScore ? g.away : g.home;
+          winner = g.awayScore > g.homeScore ? g.away : g.home;
         }
         return {
-            id: g.id,
-            game_date: date,
-            tipoff: g.tipoff,
-            away_name: g.away,
-            home_name: g.home,
-            away_record: g.awayRec,
-            home_record: g.homeRec,
-            venue: g.venue,
-            tv: g.tv,
-            spread: g.spread,
-            status: g.status,
-            winner,
+          id: g.id,
+          game_date: date,
+          tipoff: g.tipoff,
+          away_name: g.away,
+          home_name: g.home,
+          away_record: g.awayRec,
+          home_record: g.homeRec,
+          venue: g.venue,
+          tv: g.tv,
+          spread: g.spread,
+          status: g.status,
+          winner,
         };
-        });
+      });
       await supabase.from("cbb_games").upsert(gameRows, { onConflict: "id" });
 
       const { data: existing } = await supabase
@@ -196,7 +198,7 @@ const parsed: Game[] = (data.events || []).map((e: any) => {
     return g.home;
   }
 
-  function applyPreset(kind: "home" | "away" | "fav" | "dog") {
+  function applyPreset(kind: "home" | "away" | "fav" | "dog" | "random") {
     const next: Record<string, string> = { ...myPicks };
     const now = new Date();
     games.forEach((g) => {
@@ -210,6 +212,7 @@ const parsed: Game[] = (data.events || []).map((e: any) => {
         const fav = getFavorite(g);
         if (fav) pick = fav === g.home ? g.away : g.home;
       }
+      if (kind === "random") pick = Math.random() < 0.5 ? g.away : g.home;
       if (pick) next[g.id] = pick;
     });
     setMyPicks(next);
@@ -242,78 +245,78 @@ const parsed: Game[] = (data.events || []).map((e: any) => {
 
   const now = new Date();
 
-if (!player) {
-  return (
-    <main className="min-h-screen bg-zinc-950 text-white">
-      <div className="max-w-md mx-auto px-4 py-16">
-        <a href="/" className="text-zinc-400 text-sm hover:text-white">
-          ← Dashboard
-        </a>
-        <h1 className="text-3xl font-bold mt-4 mb-2">CBB Pick'em</h1>
-
-        <div className="flex gap-2 mb-6">
-          <a
-            href="/cbb/picks"
-            className="text-sm px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700"
-          >
-            Group Picks
+  if (!player) {
+    return (
+      <main className="min-h-screen bg-zinc-950 text-white">
+        <div className="max-w-md mx-auto px-4 py-16">
+          <a href="/" className="text-zinc-400 text-sm hover:text-white">
+            ← Dashboard
           </a>
-          <a
-            href="/cbb/standings"
-            className="text-sm px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700"
-          >
-            Standings
-          </a>
-        </div>
+          <h1 className="text-3xl font-bold mt-4 mb-2">CBB Pick'em</h1>
 
-        <p className="text-zinc-400 text-sm mb-4">
-          Select your name and enter your PIN to make picks
-        </p>
-
-        <div className="flex gap-2 mb-4">
-          {PLAYERS.map((p) => (
-            <button
-              key={p}
-              onClick={() => tryUnlock(p)}
-              className={`px-4 py-2 rounded text-sm ${
-                selectedName === p
-                  ? "bg-white text-zinc-950"
-                  : "bg-zinc-800 text-zinc-300"
-              }`}
+          <div className="flex gap-2 mb-6">
+            <a
+              href="/cbb/picks"
+              className="text-sm px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700"
             >
-              {p}
-            </button>
-          ))}
-        </div>
-
-        {selectedName && (
-          <div className="flex items-center gap-2">
-            <input
-              type="password"
-              inputMode="numeric"
-              maxLength={4}
-              placeholder="PIN"
-              value={pinInput}
-              onChange={(e) => setPinInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && confirmPin()}
-              className="bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-sm w-28"
-              autoFocus
-            />
-            <button
-              onClick={confirmPin}
-              className="px-4 py-2 rounded bg-emerald-600 text-sm"
+              Group Picks
+            </a>
+            <a
+              href="/cbb/standings"
+              className="text-sm px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700"
             >
-              OK
-            </button>
-            {pinError && (
-              <span className="text-xs text-red-400">{pinError}</span>
-            )}
+              Standings
+            </a>
           </div>
-        )}
-      </div>
-    </main>
-  );
-}
+
+          <p className="text-zinc-400 text-sm mb-4">
+            Select your name and enter your PIN to make picks
+          </p>
+
+          <div className="flex gap-2 mb-4">
+            {PLAYERS.map((p) => (
+              <button
+                key={p}
+                onClick={() => tryUnlock(p)}
+                className={`px-4 py-2 rounded text-sm ${
+                  selectedName === p
+                    ? "bg-white text-zinc-950"
+                    : "bg-zinc-800 text-zinc-300"
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+
+          {selectedName && (
+            <div className="flex items-center gap-2">
+              <input
+                type="password"
+                inputMode="numeric"
+                maxLength={4}
+                placeholder="PIN"
+                value={pinInput}
+                onChange={(e) => setPinInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && confirmPin()}
+                className="bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-sm w-28"
+                autoFocus
+              />
+              <button
+                onClick={confirmPin}
+                className="px-4 py-2 rounded bg-emerald-600 text-sm"
+              >
+                OK
+              </button>
+              {pinError && (
+                <span className="text-xs text-red-400">{pinError}</span>
+              )}
+            </div>
+          )}
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-zinc-950 text-white">
@@ -348,9 +351,9 @@ if (!player) {
           </div>
         </div>
 
-        <div className="flex gap-4 mb-4 flex-wrap items-end">
+        <div className="flex gap-4 mb-2 flex-wrap items-end">
           <div>
-            <label className="text-xs text-zinc-500">Date</label>
+            <label className="text-xs text-zinc-500">Date (Central)</label>
             <input
               type="date"
               value={date}
@@ -366,6 +369,10 @@ if (!player) {
             {saving ? "Saving…" : "Submit Picks"}
           </button>
         </div>
+
+        <p className="text-sm text-zinc-400 mb-4">
+          {games.length} game{games.length === 1 ? "" : "s"}
+        </p>
 
         <div className="flex gap-2 mb-4 flex-wrap">
           <button
@@ -392,6 +399,12 @@ if (!player) {
           >
             All Underdogs
           </button>
+          <button
+            onClick={() => applyPreset("random")}
+            className="px-3 py-1.5 rounded bg-zinc-800 text-sm hover:bg-zinc-700"
+          >
+            Random
+          </button>
         </div>
 
         {message && <p className="text-sm mb-4 text-zinc-300">{message}</p>}
@@ -415,33 +428,35 @@ if (!player) {
                       {g.away} ({g.awayRec}) @ {g.home} ({g.homeRec})
                     </div>
                     <div className="text-xs text-zinc-400 mt-1">
-                      {tip.toLocaleString([], {
+                      {tip.toLocaleString("en-US", {
+                        timeZone: "America/Chicago",
                         weekday: "short",
                         month: "short",
                         day: "numeric",
                         hour: "numeric",
                         minute: "2-digit",
                       })}{" "}
-                      · {g.venue} · {g.tv}
+                      CT · {g.venue} · {g.tv}
                     </div>
                     <div className="text-xs text-zinc-500 mt-0.5">
-                        {(g.status === "in" || g.status === "post") &&
-  g.awayScore != null &&
-  g.homeScore != null && (
-    <div className="text-sm mt-1 font-medium">
-      {g.away} {g.awayScore} – {g.home} {g.homeScore}
-      {g.status === "in" && (
-        <span className="text-xs text-zinc-400 ml-2">
-          {g.period > 2 ? `OT${g.period - 2}` : `H${g.period}`} {g.clock}
-        </span>
-      )}
-      {g.status === "post" && (
-        <span className="text-xs text-zinc-500 ml-2">Final</span>
-      )}
-    </div>
-  )}
                       Line: {g.spread}
                     </div>
+                    {(g.status === "in" || g.status === "post") &&
+                      g.awayScore != null &&
+                      g.homeScore != null && (
+                        <div className="text-sm mt-1 font-medium">
+                          {g.away} {g.awayScore} – {g.home} {g.homeScore}
+                          {g.status === "in" && (
+                            <span className="text-xs text-zinc-400 ml-2">
+                              {g.period > 2 ? `OT${g.period - 2}` : `H${g.period}`}{" "}
+                              {g.clock}
+                            </span>
+                          )}
+                          {g.status === "post" && (
+                            <span className="text-xs text-zinc-500 ml-2">Final</span>
+                          )}
+                        </div>
+                      )}
                   </div>
                   {!locked && (
                     <div className="flex gap-2 shrink-0">
