@@ -68,14 +68,54 @@ export default function GroupPicks() {
       setGames(parsed);
 
       if (parsed.length) {
-        const { data: existing } = await supabase
+        const now = new Date();
+        const locked = parsed.filter(
+          (g) => now >= new Date(g.tipoff) || g.status !== "pre"
+        );
+
+        if (locked.length) {
+          const { data: existing } = await supabase
+            .from("cbb_picks")
+            .select("game_id, player")
+            .in(
+              "game_id",
+              locked.map((g) => g.id)
+            );
+
+          const have = new Set(
+            (existing || []).map((p: any) => `${p.game_id}:${p.player}`)
+          );
+
+          const defaults: any[] = [];
+          for (const g of locked) {
+            for (const name of PLAYERS) {
+              if (!have.has(`${g.id}:${name}`)) {
+                defaults.push({
+                  game_id: g.id,
+                  player: name,
+                  pick: g.away,
+                  is_default: true,
+                });
+              }
+            }
+          }
+
+          if (defaults.length) {
+            await supabase.from("cbb_picks").upsert(defaults, {
+              onConflict: "game_id,player",
+              ignoreDuplicates: true,
+            });
+          }
+        }
+
+        const { data: all } = await supabase
           .from("cbb_picks")
           .select("*")
           .in(
             "game_id",
             parsed.map((g) => g.id)
           );
-        setPicks(existing || []);
+        setPicks(all || []);
       } else {
         setPicks([]);
       }
@@ -176,8 +216,10 @@ export default function GroupPicks() {
                   <div className="text-sm text-zinc-300 mt-3 border-t border-zinc-800 pt-2">
                     {PLAYERS.map((name) => {
                       const p = gamePicks.find((x: any) => x.player === name);
-                      if (p) return `${name}: ${p.pick}`;
-                      return `${name}: ${g.away} (default)`;
+                      if (!p) return `${name}: ${g.away} (default)`;
+                      return p.is_default
+                        ? `${name}: ${p.pick} (default)`
+                        : `${name}: ${p.pick}`;
                     }).join(" · ")}
                   </div>
                 ) : (

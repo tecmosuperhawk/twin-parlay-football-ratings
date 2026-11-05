@@ -228,6 +228,7 @@ export default function CbbPickem() {
       game_id,
       player,
       pick,
+      is_default: false,
     }));
 
     const { error } = await supabase.from("cbb_picks").upsert(rows, {
