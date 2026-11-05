@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 
+const PLAYERS = ["Andy", "Brett", "Brayden"];
+
 type Game = {
   id: string;
   tipoff: string;
@@ -131,6 +133,7 @@ export default function GroupPicks() {
             const tip = new Date(g.tipoff);
             const locked = now >= tip || g.status !== "pre";
             const gamePicks = picks.filter((p) => p.game_id === g.id);
+            const submitted = new Set(gamePicks.map((p: any) => p.player));
 
             return (
               <div
@@ -170,16 +173,19 @@ export default function GroupPicks() {
                   )}
 
                 {locked ? (
-                  gamePicks.length > 0 ? (
-                    <div className="text-sm text-zinc-300 mt-3 border-t border-zinc-800 pt-2">
-                      {gamePicks.map((p) => `${p.player}: ${p.pick}`).join(" · ")}
-                    </div>
-                  ) : (
-                    <div className="text-xs text-zinc-600 mt-2">No picks</div>
-                  )
+                  <div className="text-sm text-zinc-300 mt-3 border-t border-zinc-800 pt-2">
+                    {PLAYERS.map((name) => {
+                      const p = gamePicks.find((x: any) => x.player === name);
+                      if (p) return `${name}: ${p.pick}`;
+                      return `${name}: ${g.away} (default)`;
+                    }).join(" · ")}
+                  </div>
                 ) : (
-                  <div className="text-xs text-zinc-600 mt-2">
-                    Picks hidden until tipoff
+                  <div className="text-xs text-zinc-400 mt-3 border-t border-zinc-800 pt-2">
+                    {PLAYERS.map((name) =>
+                      submitted.has(name) ? `${name}: submitted` : `${name}: not submitted`
+                    ).join(" · ")}
+                    <div className="text-zinc-600 mt-1">Picks hidden until tipoff</div>
                   </div>
                 )}
               </div>

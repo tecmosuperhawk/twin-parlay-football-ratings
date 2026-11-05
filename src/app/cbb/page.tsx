@@ -501,7 +501,17 @@ export default function CbbPickem() {
             );
           })}
         </div>
-
+{games.length > 0 && (
+  <div className="mt-6 flex justify-end">
+    <button
+      onClick={submitAll}
+      disabled={saving || !Object.keys(myPicks).length}
+      className="px-4 py-2 rounded bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-sm font-medium"
+    >
+      {saving ? "Saving…" : "Submit Picks"}
+    </button>
+  </div>
+)}
         {games.length === 0 && !loading && (
           <p className="text-zinc-500 mt-8">No games on this date.</p>
         )}
