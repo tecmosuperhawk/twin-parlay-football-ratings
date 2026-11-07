@@ -10,10 +10,14 @@ type Row = {
   pct: string;
 };
 
+function todayCT() {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
+}
+
 export default function Standings() {
   const [overall, setOverall] = useState<Row[]>([]);
   const [month, setMonth] = useState<Row[]>([]);
-  const [week, setWeek] = useState<Row[]>([]);
+  const [today, setToday] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [grading, setGrading] = useState(false);
 
@@ -21,12 +25,12 @@ export default function Standings() {
     setGrading(true);
     const supabase = createClient();
 
-    // Check the last 7 days
     const dates: string[] = [];
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 10; i++) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      dates.push(d.toISOString().slice(0, 10).replace(/-/g, ""));
+      const ct = d.toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
+      dates.push(ct.replace(/-/g, ""));
     }
 
     for (const ymd of dates) {
@@ -38,7 +42,6 @@ export default function Standings() {
         const finals = (data.events || []).filter(
           (e: any) => e.status?.type?.state === "post"
         );
-
         if (!finals.length) continue;
 
         const rows = finals.map((e: any) => {
@@ -62,9 +65,55 @@ export default function Standings() {
           };
         });
 
-        await supabase.from("cbb_games").upsert(rows, { onConflict: "id" });
-      } catch {}
+        const { error } = await supabase
+          .from("cbb_games")
+          .upsert(rows, { onConflict: "id" });
+        if (error) console.error("grade error", ymd, error);
+      } catch (err) {
+        console.error("grade fetch error", ymd, err);
+      }
     }
+
+    const { data: finished } = await supabase
+      .from("cbb_games")
+      .select("id, away_name")
+      .eq("status", "post")
+      .not("winner", "is", null)
+      .not("away_name", "is", null);
+
+    if (finished?.length) {
+      const ids = finished.map((g: any) => g.id);
+      const { data: existing } = await supabase
+        .from("cbb_picks")
+        .select("game_id, player")
+        .in("game_id", ids);
+
+      const have = new Set(
+        (existing || []).map((p: any) => `${p.game_id}:${p.player}`)
+      );
+
+      const defaults: any[] = [];
+      for (const g of finished) {
+        for (const name of ["Andy", "Brett", "Brayden"]) {
+          if (!have.has(`${g.id}:${name}`)) {
+            defaults.push({
+              game_id: g.id,
+              player: name,
+              pick: g.away_name,
+              is_default: true,
+            });
+          }
+        }
+      }
+
+      if (defaults.length) {
+        await supabase.from("cbb_picks").upsert(defaults, {
+          onConflict: "game_id,player",
+          ignoreDuplicates: true,
+        });
+      }
+    }
+
     setGrading(false);
   }
 
@@ -77,69 +126,74 @@ export default function Standings() {
       .not("winner", "is", null);
 
     let allPicks: any[] = [];
-let from = 0;
-const pageSize = 1000;
-while (true) {
-  const { data, error } = await supabase
-    .from("cbb_picks")
-    .select("*")
-    .range(from, from + pageSize - 1);
-  if (error || !data?.length) break;
-  allPicks = allPicks.concat(data);
-  if (data.length < pageSize) break;
-  from += pageSize;
-}
-const safePicks = allPicks;
-
+    let from = 0;
+    const pageSize = 1000;
+    while (true) {
+      const { data, error } = await supabase
+        .from("cbb_picks")
+        .select("*")
+        .range(from, from + pageSize - 1);
+      if (error || !data?.length) break;
+      allPicks = allPicks.concat(data);
+      if (data.length < pageSize) break;
+      from += pageSize;
+    }
+    const safePicks = allPicks;
     const safeGames = games ?? [];
-    
 
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - now.getDay());
+    const todayStr = todayCT();
 
-function calc(filterDate?: Date): Row[] {
-  const cutoff = filterDate
-    ? filterDate.toISOString().slice(0, 10)
-    : null;
+    function calc(filter?: string | Date): Row[] {
+      let cutoff: string | null = null;
+      let exact: string | null = null;
 
-  const filteredGames = safeGames.filter((g) =>
-    cutoff ? g.game_date >= cutoff : true
-  );
-  const gameMap = Object.fromEntries(
-    filteredGames.map((g) => [g.id, g.winner])
-  );
+      if (filter instanceof Date) {
+        cutoff = filter.toISOString().slice(0, 10);
+      } else if (typeof filter === "string") {
+        exact = filter;
+      }
 
-  const stats: Record<string, { w: number; l: number }> = {
-    Andy: { w: 0, l: 0 },
-    Brett: { w: 0, l: 0 },
-    Brayden: { w: 0, l: 0 },
-  };
+      const filteredGames = safeGames.filter((g) => {
+        if (exact) return g.game_date === exact;
+        if (cutoff) return g.game_date >= cutoff;
+        return true;
+      });
 
-  safePicks.forEach((p) => {
-    const winner = gameMap[p.game_id];
-    if (!winner) return;
-    if (p.pick === winner) stats[p.player].w++;
-    else stats[p.player].l++;
-  });
+      const gameMap = Object.fromEntries(
+        filteredGames.map((g) => [g.id, g.winner])
+      );
 
-  return Object.entries(stats)
-    .map(([player, s]) => ({
-      player,
-      wins: s.w,
-      losses: s.l,
-      pct:
-        s.w + s.l === 0
-          ? "—"
-          : ((s.w / (s.w + s.l)) * 100).toFixed(1) + "%",
-    }))
-    .sort((a, b) => b.wins - a.wins || a.losses - b.losses);
-}
+      const stats: Record<string, { w: number; l: number }> = {
+        Andy: { w: 0, l: 0 },
+        Brett: { w: 0, l: 0 },
+        Brayden: { w: 0, l: 0 },
+      };
+
+      safePicks.forEach((p) => {
+        const winner = gameMap[p.game_id];
+        if (!winner) return;
+        if (p.pick === winner) stats[p.player].w++;
+        else stats[p.player].l++;
+      });
+
+      return Object.entries(stats)
+        .map(([player, s]) => ({
+          player,
+          wins: s.w,
+          losses: s.l,
+          pct:
+            s.w + s.l === 0
+              ? "—"
+              : ((s.w / (s.w + s.l)) * 100).toFixed(1) + "%",
+        }))
+        .sort((a, b) => b.wins - a.wins || a.losses - b.losses);
+    }
 
     setOverall(calc());
     setMonth(calc(monthStart));
-    setWeek(calc(weekStart));
+    setToday(calc(todayStr));
   }
 
   useEffect(() => {
@@ -193,24 +247,38 @@ function calc(filterDate?: Date): Row[] {
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <a href="/cbb" className="text-zinc-400 text-sm hover:text-white">
-              ← Pick'em
+            <a href="/" className="text-zinc-400 text-sm hover:text-white">
+              ← Dashboard
             </a>
             <h1 className="text-3xl font-bold mt-2">Standings</h1>
           </div>
-          <button
-            onClick={refresh}
-            disabled={loading || grading}
-            className="text-sm px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50"
-          >
-            {grading ? "Grading…" : "Refresh"}
-          </button>
+          <div className="flex gap-2">
+            <a
+              href="/cbb"
+              className="text-sm px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700"
+            >
+              Make Picks
+            </a>
+            <a
+              href="/cbb/picks"
+              className="text-sm px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700"
+            >
+              Group Picks
+            </a>
+            <button
+              onClick={refresh}
+              disabled={loading || grading}
+              className="text-sm px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50"
+            >
+              {grading ? "Grading…" : "Refresh"}
+            </button>
+          </div>
         </div>
         {loading ? (
           <p className="text-zinc-500">Loading…</p>
         ) : (
           <>
-            <Table title="This Week" rows={week} />
+            <Table title="Today" rows={today} />
             <Table title="This Month" rows={month} />
             <Table title="Season" rows={overall} />
           </>
