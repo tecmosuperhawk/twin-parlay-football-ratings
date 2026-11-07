@@ -76,10 +76,23 @@ export default function Standings() {
       .select("id, game_date, winner")
       .not("winner", "is", null);
 
-    const { data: picks } = await supabase.from("cbb_picks").select("*");
+    let allPicks: any[] = [];
+let from = 0;
+const pageSize = 1000;
+while (true) {
+  const { data, error } = await supabase
+    .from("cbb_picks")
+    .select("*")
+    .range(from, from + pageSize - 1);
+  if (error || !data?.length) break;
+  allPicks = allPicks.concat(data);
+  if (data.length < pageSize) break;
+  from += pageSize;
+}
+const safePicks = allPicks;
 
     const safeGames = games ?? [];
-    const safePicks = picks ?? [];
+    
 
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
