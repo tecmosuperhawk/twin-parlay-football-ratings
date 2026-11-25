@@ -1,17 +1,10 @@
 export default function Home() {
-  const lastUpdated = "Sep 7, 2026";
-
   return (
     <main className="min-h-screen bg-zinc-950 text-white">
       <div className="max-w-6xl mx-auto px-4 py-10">
         <div className="mb-10">
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-zinc-400 mt-2">
-            CFB Power Ratings • Projections • Edges • NFL Props • Box Scores
-          </p>
-          <p className="text-zinc-500 text-sm mt-1">
-            Last updated: {lastUpdated}
-          </p>
+          <p className="text-zinc-400 mt-2">CFB Power Ratings</p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
@@ -22,75 +15,6 @@ export default function Home() {
             <h2 className="text-xl font-semibold mb-2">CFB Power Ratings</h2>
             <p className="text-zinc-400 text-sm">
               Full blended ratings from Makinen, Steele, SP+, and Massey.
-            </p>
-          </a>
-
-          <a
-            href="/results"
-            className="block rounded-xl border border-zinc-800 bg-zinc-900 p-6 hover:border-zinc-600 transition"
-          >
-            <h2 className="text-xl font-semibold mb-2">Results</h2>
-            <p className="text-zinc-400 text-sm">
-              Week-by-week model ATS and totals record vs market.
-            </p>
-          </a>
-
-          <a
-            href="/projections"
-            className="block rounded-xl border border-zinc-800 bg-zinc-900 p-6 hover:border-zinc-600 transition"
-          >
-            <h2 className="text-xl font-semibold mb-2">CFB Weekly Projections</h2>
-            <p className="text-zinc-400 text-sm">
-              Game-by-game spreads, totals, and edges vs the market.
-            </p>
-          </a>
-
-          <a
-            href="/box"
-            className="block rounded-xl border border-zinc-800 bg-zinc-900 p-6 hover:border-zinc-600 transition"
-          >
-            <h2 className="text-xl font-semibold mb-2">Box Score Studio</h2>
-            <p className="text-zinc-400 text-sm">
-              Paste previews and depth charts. Project a CFB or NFL box.
-            </p>
-          </a>
-
-          <a
-            href="/nfl/offense"
-            className="block rounded-xl border border-zinc-800 bg-zinc-900 p-6 hover:border-zinc-600 transition"
-          >
-            <h2 className="text-xl font-semibold mb-2">NFL Offense Rankings</h2>
-            <p className="text-zinc-400 text-sm">
-              Clay 2026 team projections — total, pass, rush, PPG.
-            </p>
-          </a>
-
-          <a
-            href="/nfl/defense"
-            className="block rounded-xl border border-zinc-800 bg-zinc-900 p-6 hover:border-zinc-600 transition"
-          >
-            <h2 className="text-xl font-semibold mb-2">NFL Defense Rankings</h2>
-            <p className="text-zinc-400 text-sm">
-              Clay 2026 def rank and points allowed per game.
-            </p>
-          </a>
-<a
-  href="/cbb"
-  className="block rounded-xl border border-zinc-800 bg-zinc-900 p-6 hover:border-zinc-600 transition"
->
-  <h2 className="text-xl font-semibold mb-2">CBB Pick'em</h2>
-  <p className="text-zinc-400 text-sm">
-    Andy · Brett · Brayden — straight winner picks. Daily slate from ESPN.
-  </p>
-</a>
-          <a
-            href="/nfl/props"
-            className="block rounded-xl border border-zinc-800 bg-zinc-900 p-6 hover:border-zinc-600 transition"
-          >
-            <h2 className="text-xl font-semibold mb-2">NFL Player Props</h2>
-            <p className="text-zinc-400 text-sm">
-              Week 1 pass / rush / receiving projections with opponent
-              defensive ranks.
             </p>
           </a>
         </div>
