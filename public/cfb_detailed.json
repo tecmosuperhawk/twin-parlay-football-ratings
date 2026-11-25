@@ -8579,53 +8579,8 @@
       }
     ]
   },
-  "nationalAverages": {
-    "rank": 56,
-    "hybrid": 0.4897,
-    "sp_plus": 0.9,
-    "srs": 0,
-    "records": {
-      "overall": {
-        "wins": 0,
-        "losses": 0
-      },
-      "conference": {
-        "wins": 0,
-        "losses": 0
-      },
-      "home": {
-        "wins": 0,
-        "losses": 0
-      },
-      "away": {
-        "wins": 0,
-        "losses": 0
-      },
-      "neutral": {
-        "wins": 0,
-        "losses": 0
-      },
-      "q1": {
-        "wins": 0,
-        "losses": 0
-      },
-      "q2": {
-        "wins": 0,
-        "losses": 0
-      },
-      "q3": {
-        "wins": 0,
-        "losses": 0
-      },
-      "q4": {
-        "wins": 0,
-        "losses": 0
-      }
-    },
-    "schedule": []
-  },
   "UConn": {
-    "rank": 57,
+    "rank": 56,
     "hybrid": 0.4892,
     "sp_plus": 1.2,
     "srs": -2.7,
@@ -8781,7 +8736,7 @@
     ]
   },
   "North Texas": {
-    "rank": 58,
+    "rank": 57,
     "hybrid": 0.4866,
     "sp_plus": 2.4,
     "srs": 2.8,
@@ -8937,7 +8892,7 @@
     ]
   },
   "Syracuse": {
-    "rank": 59,
+    "rank": 58,
     "hybrid": 0.4712,
     "sp_plus": -2.5,
     "srs": -0.1,
@@ -9093,7 +9048,7 @@
     ]
   },
   "Fresno State": {
-    "rank": 60,
+    "rank": 59,
     "hybrid": 0.4702,
     "sp_plus": 4.1,
     "srs": 1.5,
@@ -9249,7 +9204,7 @@
     ]
   },
   "UNLV": {
-    "rank": 61,
+    "rank": 60,
     "hybrid": 0.4663,
     "sp_plus": -2.6,
     "srs": -5.6,
@@ -9405,7 +9360,7 @@
     ]
   },
   "Western Michigan": {
-    "rank": 62,
+    "rank": 61,
     "hybrid": 0.466,
     "sp_plus": 1.5,
     "srs": -2.8,
@@ -9571,7 +9526,7 @@
     ]
   },
   "North Carolina": {
-    "rank": 63,
+    "rank": 62,
     "hybrid": 0.4635,
     "sp_plus": 4.8,
     "srs": 6.8,
@@ -9727,7 +9682,7 @@
     ]
   },
   "Miami (OH)": {
-    "rank": 64,
+    "rank": 63,
     "hybrid": 0.4635,
     "sp_plus": -2.8,
     "srs": -8,
@@ -9893,7 +9848,7 @@
     ]
   },
   "South Florida": {
-    "rank": 65,
+    "rank": 64,
     "hybrid": 0.4619,
     "sp_plus": 3.4,
     "srs": -5.6,
@@ -10049,7 +10004,7 @@
     ]
   },
   "Florida Atlantic": {
-    "rank": 66,
+    "rank": 65,
     "hybrid": 0.4597,
     "sp_plus": -2.9,
     "srs": -2.6,
@@ -10205,7 +10160,7 @@
     ]
   },
   "Arizona State": {
-    "rank": 67,
+    "rank": 66,
     "hybrid": 0.4557,
     "sp_plus": 3.1,
     "srs": 4.2,
@@ -10361,7 +10316,7 @@
     ]
   },
   "San Diego State": {
-    "rank": 68,
+    "rank": 67,
     "hybrid": 0.4543,
     "sp_plus": -5.1,
     "srs": -4.2,
@@ -10517,7 +10472,7 @@
     ]
   },
   "Pittsburgh": {
-    "rank": 69,
+    "rank": 68,
     "hybrid": 0.4511,
     "sp_plus": 8.8,
     "srs": 2.7,
@@ -10673,7 +10628,7 @@
     ]
   },
   "NC State": {
-    "rank": 70,
+    "rank": 69,
     "hybrid": 0.4497,
     "sp_plus": -1.7,
     "srs": -0.1,
@@ -10829,7 +10784,7 @@
     ]
   },
   "Cincinnati": {
-    "rank": 71,
+    "rank": 70,
     "hybrid": 0.4489,
     "sp_plus": 0.5,
     "srs": 3.5,
@@ -10985,7 +10940,7 @@
     ]
   },
   "Oregon State": {
-    "rank": 72,
+    "rank": 71,
     "hybrid": 0.4484,
     "sp_plus": 4,
     "srs": 5.3,
@@ -11141,7 +11096,7 @@
     ]
   },
   "Kansas": {
-    "rank": 73,
+    "rank": 72,
     "hybrid": 0.4459,
     "sp_plus": 4.8,
     "srs": 6.4,
@@ -11297,7 +11252,7 @@
     ]
   },
   "Virginia": {
-    "rank": 74,
+    "rank": 73,
     "hybrid": 0.4428,
     "sp_plus": 4.1,
     "srs": 4.8,
@@ -11453,7 +11408,7 @@
     ]
   },
   "Army": {
-    "rank": 75,
+    "rank": 74,
     "hybrid": 0.4414,
     "sp_plus": -1.9,
     "srs": -1.2,
@@ -11599,7 +11554,7 @@
     ]
   },
   "Ohio": {
-    "rank": 76,
+    "rank": 75,
     "hybrid": 0.4407,
     "sp_plus": -2.4,
     "srs": -10.8,
@@ -11755,7 +11710,7 @@
     ]
   },
   "Virginia Tech": {
-    "rank": 77,
+    "rank": 76,
     "hybrid": 0.4366,
     "sp_plus": 3.9,
     "srs": -0.9,
@@ -11911,7 +11866,7 @@
     ]
   },
   "Buffalo": {
-    "rank": 78,
+    "rank": 77,
     "hybrid": 0.436,
     "sp_plus": -8.7,
     "srs": -10.5,
@@ -12067,7 +12022,7 @@
     ]
   },
   "App State": {
-    "rank": 79,
+    "rank": 78,
     "hybrid": 0.4359,
     "sp_plus": -4.2,
     "srs": -10.8,
@@ -12223,7 +12178,7 @@
     ]
   },
   "Northwestern": {
-    "rank": 80,
+    "rank": 79,
     "hybrid": 0.4356,
     "sp_plus": 10.7,
     "srs": 11.6,
@@ -12379,7 +12334,7 @@
     ]
   },
   "Wyoming": {
-    "rank": 81,
+    "rank": 80,
     "hybrid": 0.4354,
     "sp_plus": -3.2,
     "srs": -9.8,
@@ -12535,7 +12490,7 @@
     ]
   },
   "East Carolina": {
-    "rank": 82,
+    "rank": 81,
     "hybrid": 0.4279,
     "sp_plus": -3,
     "srs": -7.8,
@@ -12691,7 +12646,7 @@
     ]
   },
   "Florida State": {
-    "rank": 83,
+    "rank": 82,
     "hybrid": 0.425,
     "sp_plus": 6.3,
     "srs": 2.4,
@@ -12847,7 +12802,7 @@
     ]
   },
   "Delaware": {
-    "rank": 84,
+    "rank": 83,
     "hybrid": 0.4207,
     "sp_plus": -7.2,
     "srs": -6.9,
@@ -13003,7 +12958,7 @@
     ]
   },
   "Minnesota": {
-    "rank": 85,
+    "rank": 84,
     "hybrid": 0.4199,
     "sp_plus": -1.5,
     "srs": 0.7,
@@ -13159,7 +13114,7 @@
     ]
   },
   "West Virginia": {
-    "rank": 86,
+    "rank": 85,
     "hybrid": 0.4063,
     "sp_plus": -2.3,
     "srs": 2.6,
@@ -13315,7 +13270,7 @@
     ]
   },
   "Kansas State": {
-    "rank": 87,
+    "rank": 86,
     "hybrid": 0.4062,
     "sp_plus": 4.5,
     "srs": 2.1,
@@ -13471,7 +13426,7 @@
     ]
   },
   "UAB": {
-    "rank": 88,
+    "rank": 87,
     "hybrid": 0.4029,
     "sp_plus": -4.4,
     "srs": -8.5,
@@ -13627,7 +13582,7 @@
     ]
   },
   "Navy": {
-    "rank": 89,
+    "rank": 88,
     "hybrid": 0.3962,
     "sp_plus": -3,
     "srs": -4.4,
@@ -13773,7 +13728,7 @@
     ]
   },
   "Iowa State": {
-    "rank": 90,
+    "rank": 89,
     "hybrid": 0.3858,
     "sp_plus": 0.1,
     "srs": 4.7,
@@ -13929,7 +13884,7 @@
     ]
   },
   "Tulane": {
-    "rank": 91,
+    "rank": 90,
     "hybrid": 0.3801,
     "sp_plus": -10.4,
     "srs": -7.6,
@@ -14085,7 +14040,7 @@
     ]
   },
   "Kennesaw State": {
-    "rank": 92,
+    "rank": 91,
     "hybrid": 0.3761,
     "sp_plus": -7.8,
     "srs": -8,
@@ -14241,7 +14196,7 @@
     ]
   },
   "Colorado": {
-    "rank": 93,
+    "rank": 92,
     "hybrid": 0.3729,
     "sp_plus": -3.9,
     "srs": 0.7,
@@ -14397,7 +14352,7 @@
     ]
   },
   "Nevada": {
-    "rank": 94,
+    "rank": 93,
     "hybrid": 0.3684,
     "sp_plus": -3.7,
     "srs": -7.3,
@@ -14553,7 +14508,7 @@
     ]
   },
   "Coastal Carolina": {
-    "rank": 95,
+    "rank": 94,
     "hybrid": 0.3656,
     "sp_plus": -7.4,
     "srs": -10,
@@ -14709,7 +14664,7 @@
     ]
   },
   "South Alabama": {
-    "rank": 96,
+    "rank": 95,
     "hybrid": 0.3628,
     "sp_plus": -9.7,
     "srs": -8.1,
@@ -14865,7 +14820,7 @@
     ]
   },
   "Maryland": {
-    "rank": 97,
+    "rank": 96,
     "hybrid": 0.3616,
     "sp_plus": -0.9,
     "srs": -2.1,
@@ -15021,7 +14976,7 @@
     ]
   },
   "Georgia State": {
-    "rank": 98,
+    "rank": 97,
     "hybrid": 0.36,
     "sp_plus": -8.3,
     "srs": -6.1,
@@ -15177,7 +15132,7 @@
     ]
   },
   "Mississippi State": {
-    "rank": 99,
+    "rank": 98,
     "hybrid": 0.3519,
     "sp_plus": 0.8,
     "srs": 2.5,
@@ -15333,7 +15288,7 @@
     ]
   },
   "Arkansas State": {
-    "rank": 100,
+    "rank": 99,
     "hybrid": 0.3495,
     "sp_plus": -7.3,
     "srs": -11.4,
@@ -15489,7 +15444,7 @@
     ]
   },
   "Utah State": {
-    "rank": 101,
+    "rank": 100,
     "hybrid": 0.341,
     "sp_plus": -6.8,
     "srs": -4.6,
@@ -15645,7 +15600,7 @@
     ]
   },
   "Arkansas": {
-    "rank": 102,
+    "rank": 101,
     "hybrid": 0.3374,
     "sp_plus": -1.2,
     "srs": 3.7,
@@ -15801,7 +15756,7 @@
     ]
   },
   "Marshall": {
-    "rank": 103,
+    "rank": 102,
     "hybrid": 0.3341,
     "sp_plus": -11.9,
     "srs": -15.2,
@@ -15957,7 +15912,7 @@
     ]
   },
   "Texas A&M": {
-    "rank": 104,
+    "rank": 103,
     "hybrid": 0.3323,
     "sp_plus": 6.9,
     "srs": 6.5,
@@ -16113,7 +16068,7 @@
     ]
   },
   "Vanderbilt": {
-    "rank": 105,
+    "rank": 104,
     "hybrid": 0.3305,
     "sp_plus": -2.1,
     "srs": 0.4,
@@ -16269,7 +16224,7 @@
     ]
   },
   "Middle Tennessee": {
-    "rank": 106,
+    "rank": 105,
     "hybrid": 0.3295,
     "sp_plus": -13.7,
     "srs": -11,
@@ -16425,7 +16380,7 @@
     ]
   },
   "Massachusetts": {
-    "rank": 107,
+    "rank": 106,
     "hybrid": 0.3191,
     "sp_plus": -10.1,
     "srs": -16.4,
@@ -16581,7 +16536,7 @@
     ]
   },
   "Boston College": {
-    "rank": 108,
+    "rank": 107,
     "hybrid": 0.3154,
     "sp_plus": -8.2,
     "srs": -6,
@@ -16737,7 +16692,7 @@
     ]
   },
   "Georgia Tech": {
-    "rank": 109,
+    "rank": 108,
     "hybrid": 0.3139,
     "sp_plus": -5.8,
     "srs": -4.9,
@@ -16893,7 +16848,7 @@
     ]
   },
   "Hawai'i": {
-    "rank": 110,
+    "rank": 109,
     "hybrid": 0.3123,
     "sp_plus": -10.1,
     "srs": -12.5,
@@ -17049,7 +17004,7 @@
     ]
   },
   "Florida International": {
-    "rank": 111,
+    "rank": 110,
     "hybrid": 0.3078,
     "sp_plus": -9.9,
     "srs": -11.8,
@@ -17205,7 +17160,7 @@
     ]
   },
   "Missouri State": {
-    "rank": 112,
+    "rank": 111,
     "hybrid": 0.3076,
     "sp_plus": -13.1,
     "srs": -13.5,
@@ -17361,7 +17316,7 @@
     ]
   },
   "Central Michigan": {
-    "rank": 113,
+    "rank": 112,
     "hybrid": 0.3056,
     "sp_plus": -11,
     "srs": -12.2,
@@ -17517,7 +17472,7 @@
     ]
   },
   "Troy": {
-    "rank": 114,
+    "rank": 113,
     "hybrid": 0.2965,
     "sp_plus": -13.8,
     "srs": -14.9,
@@ -17673,7 +17628,7 @@
     ]
   },
   "Temple": {
-    "rank": 115,
+    "rank": 114,
     "hybrid": 0.2868,
     "sp_plus": -11.7,
     "srs": -14.8,
@@ -17829,7 +17784,7 @@
     ]
   },
   "Washington State": {
-    "rank": 116,
+    "rank": 115,
     "hybrid": 0.2821,
     "sp_plus": -10.3,
     "srs": -6.7,
@@ -17985,7 +17940,7 @@
     ]
   },
   "San Jos\u00e9 State": {
-    "rank": 117,
+    "rank": 116,
     "hybrid": 0.2814,
     "sp_plus": -12.1,
     "srs": -12.1,
@@ -18151,7 +18106,7 @@
     ]
   },
   "Stanford": {
-    "rank": 118,
+    "rank": 117,
     "hybrid": 0.2792,
     "sp_plus": -9.3,
     "srs": -4.2,
@@ -18307,7 +18262,7 @@
     ]
   },
   "Colorado State": {
-    "rank": 119,
+    "rank": 118,
     "hybrid": 0.2779,
     "sp_plus": -13,
     "srs": -10.4,
@@ -18463,7 +18418,7 @@
     ]
   },
   "Rutgers": {
-    "rank": 120,
+    "rank": 119,
     "hybrid": 0.2762,
     "sp_plus": -11.2,
     "srs": -7.4,
@@ -18619,7 +18574,7 @@
     ]
   },
   "Michigan State": {
-    "rank": 121,
+    "rank": 120,
     "hybrid": 0.2753,
     "sp_plus": -2.9,
     "srs": 0.7,
@@ -18775,7 +18730,7 @@
     ]
   },
   "Old Dominion": {
-    "rank": 122,
+    "rank": 121,
     "hybrid": 0.2738,
     "sp_plus": -14.7,
     "srs": -16.2,
@@ -18931,7 +18886,7 @@
     ]
   },
   "Southern Miss": {
-    "rank": 123,
+    "rank": 122,
     "hybrid": 0.2706,
     "sp_plus": -17.4,
     "srs": -16.4,
@@ -19087,7 +19042,7 @@
     ]
   },
   "Eastern Michigan": {
-    "rank": 124,
+    "rank": 123,
     "hybrid": 0.2555,
     "sp_plus": -17.4,
     "srs": -16.6,
@@ -19253,7 +19208,7 @@
     ]
   },
   "Purdue": {
-    "rank": 125,
+    "rank": 124,
     "hybrid": 0.2545,
     "sp_plus": -3.6,
     "srs": -0.3,
@@ -19409,7 +19364,7 @@
     ]
   },
   "Western Kentucky": {
-    "rank": 126,
+    "rank": 125,
     "hybrid": 0.2539,
     "sp_plus": -11.9,
     "srs": -13.4,
@@ -19565,7 +19520,7 @@
     ]
   },
   "New Mexico State": {
-    "rank": 127,
+    "rank": 126,
     "hybrid": 0.2495,
     "sp_plus": -15.5,
     "srs": -16.5,
@@ -19721,7 +19676,7 @@
     ]
   },
   "Bowling Green": {
-    "rank": 128,
+    "rank": 127,
     "hybrid": 0.2495,
     "sp_plus": -17,
     "srs": -15.5,
@@ -19877,7 +19832,7 @@
     ]
   },
   "Rice": {
-    "rank": 129,
+    "rank": 128,
     "hybrid": 0.2431,
     "sp_plus": -16,
     "srs": -12.1,
@@ -20033,7 +19988,7 @@
     ]
   },
   "California": {
-    "rank": 130,
+    "rank": 129,
     "hybrid": 0.2318,
     "sp_plus": -12.9,
     "srs": -12,
@@ -20189,7 +20144,7 @@
     ]
   },
   "UL Monroe": {
-    "rank": 131,
+    "rank": 130,
     "hybrid": 0.2246,
     "sp_plus": -24.3,
     "srs": -20.6,
@@ -20345,7 +20300,7 @@
     ]
   },
   "Ball State": {
-    "rank": 132,
+    "rank": 131,
     "hybrid": 0.198,
     "sp_plus": -20.8,
     "srs": -18.4,
@@ -20501,7 +20456,7 @@
     ]
   },
   "Kent State": {
-    "rank": 133,
+    "rank": 132,
     "hybrid": 0.1753,
     "sp_plus": -22.1,
     "srs": -20.8,
@@ -20667,7 +20622,7 @@
     ]
   },
   "Sacramento State": {
-    "rank": 134,
+    "rank": 133,
     "hybrid": 0.1665,
     "sp_plus": -26.4,
     "srs": -25.7,
@@ -20823,7 +20778,7 @@
     ]
   },
   "Charlotte": {
-    "rank": 135,
+    "rank": 134,
     "hybrid": 0.1643,
     "sp_plus": -24.9,
     "srs": -24.8,
@@ -20979,7 +20934,7 @@
     ]
   },
   "Sam Houston": {
-    "rank": 136,
+    "rank": 135,
     "hybrid": 0.1631,
     "sp_plus": -21.9,
     "srs": -19.3,
@@ -21135,7 +21090,7 @@
     ]
   },
   "Akron": {
-    "rank": 137,
+    "rank": 136,
     "hybrid": 0.1594,
     "sp_plus": -26.3,
     "srs": -22.6,
@@ -21291,7 +21246,7 @@
     ]
   },
   "UTEP": {
-    "rank": 138,
+    "rank": 137,
     "hybrid": 0.1162,
     "sp_plus": -26.3,
     "srs": -22.3,
@@ -21447,7 +21402,7 @@
     ]
   },
   "Northern Illinois": {
-    "rank": 139,
+    "rank": 138,
     "hybrid": 0.1026,
     "sp_plus": -28.3,
     "srs": -20.1,
