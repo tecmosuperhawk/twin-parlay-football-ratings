@@ -66,73 +66,10 @@ export default function RatingsPage() {
         </h1>
         <p className="text-stone-500 mt-1 text-sm">Hybrid ranking · 2026</p>
 
-        <div className="mt-5 overflow-x-auto rounded-lg border border-stone-300 bg-white shadow-sm">
-          <table className="w-full text-sm border-collapse min-w-[640px]">
-            <thead>
-              <tr className="bg-stone-200 text-stone-600 text-xs uppercase tracking-wide">
-                <th className="text-left px-2 py-2.5 border border-stone-300 w-10">#</th>
-                <th className="text-left px-2 py-2.5 border border-stone-300">Team</th>
-                <th className="text-right px-2 py-2.5 border border-stone-300 whitespace-nowrap">
-                  Hybrid
-                </th>
-                <th className="text-center px-2 py-2.5 border border-stone-300 whitespace-nowrap">
-                  Record
-                </th>
-                <th className="text-center px-2 py-2.5 border border-stone-300 bg-stone-100 whitespace-nowrap">
-                  Q1
-                </th>
-                <th className="text-center px-2 py-2.5 border border-stone-300 bg-stone-100 whitespace-nowrap">
-                  Q2
-                </th>
-                <th className="text-center px-2 py-2.5 border border-stone-300 bg-stone-100 whitespace-nowrap">
-                  Q3
-                </th>
-                <th className="text-center px-2 py-2.5 border border-stone-300 bg-stone-100 whitespace-nowrap">
-                  Q4
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {teams.map((t) => (
-                <tr key={t.name} className="hover:bg-amber-50">
-                  <td className="px-2 py-2 border border-stone-200 tabular-nums text-stone-500">
-                    {t.rank}
-                  </td>
-                  <td className="px-2 py-2 border border-stone-200 font-medium whitespace-nowrap">
-                    <Link
-                      href={`/ratings/${encodeURIComponent(t.name)}`}
-                      className="text-stone-900 underline decoration-stone-300 underline-offset-2 hover:decoration-stone-600"
-                    >
-                      {t.name}
-                    </Link>
-                  </td>
-                  <td className="px-2 py-2 border border-stone-200 text-right tabular-nums whitespace-nowrap">
-                    {t.hybrid.toFixed(4)}
-                  </td>
-                  <td className="px-2 py-2 border border-stone-200 text-center whitespace-nowrap">
-                    {rec(t.records.overall)}
-                  </td>
-                  <td className="px-2 py-2 border border-stone-200 text-center bg-stone-50 whitespace-nowrap">
-                    {rec(t.records.q1)}
-                  </td>
-                  <td className="px-2 py-2 border border-stone-200 text-center bg-stone-50 whitespace-nowrap">
-                    {rec(t.records.q2)}
-                  </td>
-                  <td className="px-2 py-2 border border-stone-200 text-center bg-stone-50 whitespace-nowrap">
-                    {rec(t.records.q3)}
-                  </td>
-                  <td className="px-2 py-2 border border-stone-200 text-center bg-stone-50 whitespace-nowrap">
-                    {rec(t.records.q4)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="text-xs text-stone-400 mt-2 sm:hidden">
-          Swipe sideways to see all columns.
-        </p>
-      </div>
-    </main>
-  );
-}
+        <div className="mt-6 rounded-lg border border-stone-300 bg-white p-4 sm:p-5 shadow-sm">
+          <h2 className="font-semibold text-stone-900">
+            Quadrant definitions for the CFB hybrid ranking
+          </h2>
+          <p className="text-sm text-stone-600 mt-2">
+            Quadrants are based on the opponent’s current rank in this system and the game
+            location. FCS 
